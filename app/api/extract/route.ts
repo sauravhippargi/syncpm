@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { extractActionItems, GeminiRequestError, GeminiValidationError } from "@/lib/gemini";
+import { GeminiRequestError, GeminiValidationError } from "@/lib/gemini";
+import { runExtractionForTranscript } from "@/lib/extraction";
 
 // Vercel Hobby default function timeout is 10s (architecture.md section 5) —
 // extraction on longer transcripts can take longer than that.
@@ -49,21 +50,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const items = await extractActionItems(transcript.rawText);
-
-    const created = await prisma.$transaction(
-      items.map((item) =>
-        prisma.actionItem.create({
-          data: {
-            transcriptId: transcript.id,
-            description: item.description,
-            owner: item.owner,
-            dueDate: item.dueDate ? new Date(item.dueDate) : null,
-            isBlocker: item.isBlocker,
-            blockerNote: item.blockerNote,
-          },
-        })
-      )
+    const created = await runExtractionForTranscript(
+      transcript.id,
+      transcript.rawText
     );
 
     return NextResponse.json({ items: created }, { status: 200 });

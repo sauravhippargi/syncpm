@@ -57,9 +57,20 @@ export default async function TranscriptHistoryPage() {
                   className="flex flex-1 items-center justify-between gap-4"
                 >
                   <div className="flex flex-col gap-1">
-                    <span className="text-[14px] font-medium text-text-primary">
-                      {transcript.title || "Untitled meeting"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-medium text-text-primary">
+                        {transcript.title || "Untitled meeting"}
+                      </span>
+                      <span
+                        className={`rounded-[4px] px-1.5 py-0.5 text-[10px] font-medium ${
+                          transcript.source === "fathom"
+                            ? "bg-accent-tint text-accent"
+                            : "bg-page text-text-secondary"
+                        }`}
+                      >
+                        {transcript.source === "fathom" ? "Fathom" : "Manual"}
+                      </span>
+                    </div>
                     <span className="text-[11px] text-text-secondary">
                       Uploaded {transcript.uploadedAt.toLocaleString()}
                     </span>

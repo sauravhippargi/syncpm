@@ -17,8 +17,9 @@ model User {
   hashedPassword String   @map("hashed_password")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  transcripts    Transcript[]
-  jiraConnection JiraConnection?
+  transcripts      Transcript[]
+  jiraConnection   JiraConnection?
+  fathomConnection FathomConnection?
 
   @@map("users")
 }
@@ -40,12 +41,27 @@ model JiraConnection {
   @@map("jira_connections")
 }
 
+model FathomConnection {
+  id              String   @id @default(cuid())
+  userId          String   @unique @map("user_id")
+  apiKey          String   @map("api_key")
+  webhookSecret   String   @map("webhook_secret")
+  fathomWebhookId String   @map("fathom_webhook_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("fathom_connections")
+}
+
 model Transcript {
-  id         String   @id @default(cuid())
-  userId     String   @map("user_id")
-  title      String?
-  uploadedAt DateTime @default(now()) @map("uploaded_at")
-  rawText    String   @map("raw_text")
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  title           String?
+  uploadedAt      DateTime @default(now()) @map("uploaded_at")
+  rawText         String   @map("raw_text")
+  source          String   @default("manual") @map("source") // "manual" | "fathom"
+  fathomMeetingId Int?     @unique @map("fathom_meeting_id")
 
   user        User         @relation(fields: [userId], references: [id])
   actionItems ActionItem[]

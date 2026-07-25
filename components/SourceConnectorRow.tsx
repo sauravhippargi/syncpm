@@ -1,24 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import BrandIcon from "./BrandIcon";
+import FathomConnectModal from "./FathomConnectModal";
 import type { BrandIconSlug } from "@/lib/brand-icons";
 
-interface SourceConnector {
+interface PlaceholderConnector {
   slug: BrandIconSlug;
   name: string;
 }
 
-// Visual-only placeholders (PRD 6.1) — no real API logic, per rules.md
-// section 5.
-const CONNECTORS: SourceConnector[] = [
-  { slug: "fathom", name: "Fathom" },
+// Zoom and Google Meet remain visual-only "Coming soon" placeholders — no
+// real API logic, per rules.md section 5. Fathom is the one real
+// integration (PRD 6.1), handled separately below.
+const PLACEHOLDER_CONNECTORS: PlaceholderConnector[] = [
   { slug: "zoom", name: "Zoom" },
   { slug: "googlemeet", name: "Google Meet" },
 ];
 
-export default function SourceConnectorRow() {
+export default function SourceConnectorRow({
+  fathomConnected,
+}: {
+  fathomConnected: boolean;
+}) {
+  const router = useRouter();
   const [activeMessage, setActiveMessage] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!activeMessage) return;
@@ -29,7 +37,23 @@ export default function SourceConnectorRow() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        {CONNECTORS.map((connector) => (
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-1.5 rounded-[6px] border border-border bg-card px-2.5 py-1.5 transition-opacity hover:opacity-80"
+        >
+          <BrandIcon slug="fathom" className="h-4 w-4" />
+          <span className="text-[12px] font-medium text-text-secondary">
+            Fathom
+          </span>
+          {fathomConnected && (
+            <span className="rounded-[4px] bg-success-tint px-1.5 py-0.5 text-[10px] font-medium text-success">
+              Connected
+            </span>
+          )}
+        </button>
+
+        {PLACEHOLDER_CONNECTORS.map((connector) => (
           <button
             key={connector.name}
             type="button"
@@ -56,6 +80,14 @@ export default function SourceConnectorRow() {
         </span>
         <div className="h-px flex-1 bg-border" />
       </div>
+
+      {modalOpen && (
+        <FathomConnectModal
+          connected={fathomConnected}
+          onClose={() => setModalOpen(false)}
+          onChange={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
