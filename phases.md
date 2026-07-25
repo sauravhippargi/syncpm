@@ -27,8 +27,10 @@ Goal: turn this from a single-user tool into one where any PM can sign up and ke
 - `user_id` foreign key added to `transcripts`
 - Auth.js (Credentials provider, JWT strategy) wired up — sign up (hash + store password) and sign in (verify + issue session)
 - Combined landing + sign in/sign up page built at the root route
-- Middleware protects `/upload`, `/review`, `/history`, `/deadlines`, `/dashboard` — redirects unauthenticated visitors to `/`
+- Middleware protects `/upload`, `/review`, `/history`, `/deadlines`, `/dashboard` — redirects unauthenticated visitors to `/`, and redirects already-authenticated visitors away from `/` to `/dashboard`
 - Every existing query updated to filter by the signed-in user's `user_id`
+- **Persistent sidebar shell** (vertical nav: Dashboard, Upload transcript, Transcript history, Jira tickets, Deadlines, signed-in user + sign out) wrapping every authenticated page
+- **Dashboard home page** — the real post-login landing screen: open item/blocker/synced-to-Jira counts, most recent transcript, upcoming deadlines preview, with an empty state if no transcripts exist yet
 
 ## Phase 3 — Jira Integration
 Goal: prove the real third-party integration works, since this is the highest-value portfolio piece and the most likely to have surprises (auth, field mapping, API quirks).
@@ -39,11 +41,10 @@ Goal: prove the real third-party integration works, since this is the highest-va
 - `jira_sync_log` populated with result (synced/failed + issue link)
 
 ## Phase 4 — History & Tracking Views
-Goal: turn stored data into the views that make this feel like a real tool, not a one-shot demo.
+Goal: build out the remaining full-list views the Dashboard's previews link out to.
 - Transcript History tab (scoped to the signed-in user)
 - Jira Sync History tab (scoped to the signed-in user)
-- Upcoming Deadlines tab — all open items across the user's own transcripts, sorted by due date
-- Weekly Status Dashboard — aggregated by week, scoped to the signed-in user
+- Upcoming Deadlines tab — full, filterable list of all open items across the user's own transcripts, sorted by due date
 
 ## Phase 5 — Slack Message Drafting
 Goal: round out the "AI does the busywork" story.

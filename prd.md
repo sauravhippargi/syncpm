@@ -60,10 +60,11 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 - No emojis, no filler ("just checking in!", "hope you're doing well!") — direct and professional
 - Displayed in-app for the PM to copy and send manually — no live Slack API call in v1
 
-### 6.6 Weekly Status Dashboard
-- Aggregates all approved action items and blockers from the week's meetings
-- Filterable by project/meeting
-- Highlights overdue action items and open (unresolved) blockers
+### 6.6 Dashboard (Home)
+- The default screen after signing in — replaces a blank upload form as the landing experience, so the app feels alive on login rather than starting from zero every time
+- Persistent sidebar (logo, Dashboard, Upload transcript, Transcript history, Jira tickets, Deadlines, signed-in user + sign out) wraps every authenticated page
+- Shows: open action item count, blocker count, tickets synced to Jira; the most recently uploaded transcript with a link into its Review screen; a short preview of upcoming deadlines
+- If no transcripts exist yet, shows an empty state with a clear call-to-action to upload the first one
 
 ### 6.7 Transcript History
 - List of all previously uploaded transcripts (filename, meeting title/date if available, upload timestamp)
@@ -75,7 +76,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 
 ### 6.9 Upcoming Deadlines Tab
 - Cross-meeting view of all open action items sorted by due date (soonest first)
-- Complements the Weekly Status Dashboard (6.6), which rolls up by week — this tab is a live, sorted "what's due next" queue
+- Complements the Dashboard's deadlines preview (6.6), which only shows a short list — this is the full, filterable view
 - Overdue items are visually flagged
 
 ## 7. Success Metrics

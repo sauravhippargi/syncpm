@@ -52,7 +52,7 @@ export default function AuthForm() {
         return;
       }
 
-      router.push("/upload");
+      router.push("/dashboard");
       router.refresh();
     } catch {
       setError("Something went wrong — try again");

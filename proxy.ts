@@ -21,6 +21,10 @@ export default auth((req) => {
   if (isProtected && !req.auth) {
     return NextResponse.redirect(new URL("/", req.nextUrl));
   }
+
+  if (pathname === "/" && req.auth) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  }
 });
 
 export const config = {

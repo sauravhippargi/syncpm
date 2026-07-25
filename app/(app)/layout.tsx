@@ -1,0 +1,23 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import Sidebar from "@/components/Sidebar";
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // proxy.ts already redirects unauthenticated requests here, but data access
+  // and layout composition must never rely on that alone (rules.md section 3).
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/");
+  }
+
+  return (
+    <div className="flex flex-1">
+      <Sidebar userEmail={session.user.email ?? ""} />
+      <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
+    </div>
+  );
+}

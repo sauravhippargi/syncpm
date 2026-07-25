@@ -19,7 +19,8 @@
 flowchart TD
     Z[Sign in / sign up] --> Z2{Authenticated?}
     Z2 -->|No| Z
-    Z2 -->|Yes| A[User uploads transcript]
+    Z2 -->|Yes| Dash[Dashboard home]
+    Dash --> A[User uploads transcript]
     A --> B[(Stored in Postgres: transcripts table, owned by userId)]
     B --> C[API route sends transcript to Gemini]
     C --> D[Gemini returns structured JSON:\naction items, owners, blockers]
@@ -34,38 +35,40 @@ flowchart TD
     E --> M[Transcript History tab]
     K --> N[Jira Sync History tab]
     E --> O[Upcoming Deadlines tab\nsorted by due date]
-    E --> P[Weekly Status Dashboard\naggregated by week]
+    E --> Dash
 ```
 
 **Walkthrough:**
-0. Visitor lands on the combined landing/login page. `proxy.ts` redirects any unauthenticated request for `/upload`, `/review`, `/history`, `/deadlines`, or `/dashboard` back here (Next.js 16 renamed the `middleware.ts` file convention to `proxy.ts` — same mechanism, new name).
-1. Once signed in, the user uploads a transcript (paste text or `.txt`/`.vtt`/`.srt` file) → stored in the `transcripts` table, tagged with their `userId`.
+0. Visitor lands on the combined landing/login page. Once authenticated, they're redirected to `/dashboard` — a persistent sidebar (logo, Dashboard, Upload transcript, Transcript history, Jira tickets, Deadlines, signed-in user + sign out) wraps every page from here on. Middleware redirects unauthenticated requests for any of these routes back to `/`; it also redirects an already-authenticated visitor away from `/` straight to `/dashboard`.
+1. From the sidebar, the user uploads a transcript (paste text or `.txt`/`.vtt`/`.srt` file) → stored in the `transcripts` table, tagged with their `userId`.
 2. An API route sends the transcript to Gemini with a prompt requesting structured JSON output (action items, assigned owners, blockers).
 3. The parsed result is stored in the `action_items` table, linked to the source transcript.
 4. The Review & Edit screen shows everything for the user to correct before anything goes further.
 5. Approving an item unlocks two things:
    - **Sync to Jira** — calls the Jira REST API to create a real issue; the result (success/failure, issue link) is logged in `jira_sync_log`.
    - **Slack draft** — a professional message is generated and shown for manual copy/paste (no live send in v1).
-6. Four views read from this same data: Transcript History, Jira Sync History, Upcoming Deadlines (all open items sorted by due date), and the Weekly Status Dashboard (aggregated by week).
+6. Four views read from this same data: Transcript History, Jira Sync History, Upcoming Deadlines (all open items sorted by due date), and **Dashboard** — the merged home/overview screen (replacing the earlier separate Weekly Status Dashboard) showing open item/blocker/synced counts, the most recent transcript, and a deadlines preview. If the user has no transcripts yet, Dashboard shows an empty state with a call-to-action to upload their first one instead.
 
 ## 3. Folder & File Structure
 
 ```
 syncpm/
-├── proxy.ts                           # Redirects unauthenticated requests to / (Next 16 renamed middleware.ts -> proxy.ts)
+├── middleware.ts                      # Redirects unauthenticated requests to /, and authenticated visitors away from / to /dashboard
 ├── app/
 │   ├── page.tsx                       # Combined landing + sign in/sign up page
-│   ├── upload/
-│   │   └── page.tsx                   # Transcript upload screen
-│   ├── review/[transcriptId]/
-│   │   └── page.tsx                   # Review & edit extracted items
-│   ├── history/
-│   │   ├── transcripts/page.tsx       # Transcript history
-│   │   └── jira/page.tsx              # Jira sync history
-│   ├── deadlines/
-│   │   └── page.tsx                   # Upcoming deadlines tab
-│   ├── dashboard/
-│   │   └── page.tsx                   # Weekly status dashboard
+│   ├── (app)/
+│   │   ├── layout.tsx                 # Persistent sidebar shell wrapping every authenticated page
+│   │   ├── dashboard/
+│   │   │   └── page.tsx               # Dashboard home: stats, recent transcript, deadlines preview
+│   │   ├── upload/
+│   │   │   └── page.tsx               # Transcript upload screen
+│   │   ├── review/[transcriptId]/
+│   │   │   └── page.tsx               # Review & edit extracted items
+│   │   ├── history/
+│   │   │   ├── transcripts/page.tsx   # Transcript history
+│   │   │   └── jira/page.tsx          # Jira sync history
+│   │   └── deadlines/
+│   │       └── page.tsx               # Full upcoming deadlines list
 │   └── api/
 │       ├── auth/[...nextauth]/route.ts # Auth.js sign in/sign up handlers
 │       ├── transcripts/route.ts       # Handles upload + storage
@@ -80,6 +83,7 @@ syncpm/
 │   └── prompts/
 │       └── extraction.ts              # Prompt templates + JSON schema
 ├── components/
+│   ├── Sidebar.tsx                    # Persistent nav: logo, links with active-route highlight, user email + sign out
 │   ├── ActionItemCard.tsx
 │   ├── TranscriptUploader.tsx
 │   ├── JiraSyncButton.tsx
@@ -113,3 +117,4 @@ Ownership is scoped at the `transcripts` level only — `action_items` and `jira
 - **Passwords** are hashed with bcrypt before storage — never stored or logged in plain text.
 - **`AUTH_SECRET`** (required by Auth.js) lives in environment variables like every other secret — generate once, set in `.env` and all three Vercel environments.
 - **Every data-fetching query** must filter by the signed-in user's `user_id` — there is no "admin" or cross-user view in v1, so a missed filter is a real data leak between accounts, not just a display bug.
+- **Dashboard and Deadlines queries** sort across all of a user's `action_items` by `due_date` — fine at this data scale without one, but add a Prisma index on `(transcript_id, due_date)` if it's ever noticeably slow.
