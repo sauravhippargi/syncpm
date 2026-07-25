@@ -21,15 +21,9 @@ export default async function DashboardPage() {
   ]);
 
   const header = (
-    <div className="flex flex-col gap-1">
-      <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
-        Dashboard
-      </h1>
-      <p className="text-[13px] leading-[1.4] text-text-secondary">
-        An overview of your open action items, blockers, and Jira sync
-        status.
-      </p>
-    </div>
+    <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
+      Dashboard
+    </h1>
   );
 
   if (transcripts.length === 0) {
@@ -44,6 +38,7 @@ export default async function DashboardPage() {
   const allItems = transcripts.flatMap((t) => t.actionItems);
   const openItems = allItems.filter((item) => item.status === "open");
   const openBlockers = openItems.filter((item) => isBlockerNote(item.blockerNote));
+  const doneItems = allItems.filter((item) => item.status === "done");
   const syncedCount = allItems.reduce(
     (sum, item) =>
       sum + item.jiraSyncLogs.filter((log) => log.status === "synced").length,
@@ -66,19 +61,28 @@ export default async function DashboardPage() {
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       {header}
 
-      <div className="grid grid-cols-3 gap-3">
-        <StatTile label="Open action items" value={openItems.length} />
+      <div className="grid grid-cols-4 gap-3">
+        <StatTile
+          label="Open action items"
+          value={openItems.length}
+          href="/action-items"
+        />
         <StatTile
           label="Blockers"
           value={openBlockers.length}
           tone="warning"
         />
-        <StatTile label="Synced to Jira" value={syncedCount} tone="success" />
+        <StatTile
+          label="Completed action items"
+          value={doneItems.length}
+          tone="success"
+        />
+        <StatTile label="Tickets raised" value={syncedCount} tone="success" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
         <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-          <p className="text-[12px] font-medium text-text-secondary">
+          <p className="text-[14px] font-semibold text-text-primary">
             Recent transcripts
           </p>
           <ul className="mt-3 flex flex-col divide-y divide-row-divider">
@@ -87,23 +91,22 @@ export default async function DashboardPage() {
                 isBlockerNote(item.blockerNote)
               ).length;
               return (
-                <li key={t.id}>
-                  <Link
-                    href={`/review/${t.id}`}
-                    className="group flex flex-col py-3 first:pt-0 last:pb-0"
-                  >
+                <li key={t.id} className="py-3 first:pt-0 last:pb-0">
+                  <Link href={`/review/${t.id}`} className="group flex flex-col">
                     <span className="mb-1.5 truncate text-[14.5px] font-semibold text-text-primary group-hover:text-accent">
                       {t.title || "Untitled meeting"}
                     </span>
                     <span className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">
-                      <span>
+                      <span className="inline-flex items-center rounded-full bg-neutral-pill-bg px-2 py-0.5 text-[11.5px] font-semibold text-neutral-pill-text">
                         {t.actionItems.length} action item
                         {t.actionItems.length === 1 ? "" : "s"}
                       </span>
-                      <span>
-                        {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
-                      </span>
-                      <span>{t.uploadedAt.toLocaleString()}</span>
+                      {blockerCount > 0 && (
+                        <span className="inline-flex items-center rounded-full bg-warning-tint px-2 py-0.5 text-[11.5px] font-semibold text-warning-text">
+                          {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
+                        </span>
+                      )}
+                      <span>· {t.uploadedAt.toLocaleString()}</span>
                     </span>
                   </Link>
                 </li>
@@ -114,7 +117,7 @@ export default async function DashboardPage() {
 
         <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
           <div className="flex items-center justify-between">
-            <p className="text-[12px] font-medium text-text-secondary">
+            <p className="text-[14px] font-semibold text-text-primary">
               Upcoming deadlines
             </p>
             <Link
@@ -139,7 +142,7 @@ export default async function DashboardPage() {
                     key={item.id}
                     className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <span className="text-[14.5px] font-semibold leading-[1.4] text-text-primary">
+                    <span className="text-[14.5px] font-normal leading-[1.4] text-text-primary">
                       {item.description || "Untitled action item"}
                     </span>
                     <span
@@ -166,10 +169,12 @@ function StatTile({
   label,
   value,
   tone,
+  href,
 }: {
   label: string;
   value: number;
   tone?: "warning" | "success";
+  href?: string;
 }) {
   const valueColor =
     tone === "warning"
@@ -184,8 +189,8 @@ function StatTile({
         ? "bg-success"
         : "bg-accent";
 
-  return (
-    <div className="rounded-[10px] border border-border bg-card px-5 pt-5 pb-[18px] shadow-card">
+  const content = (
+    <>
       <p
         className={`mb-1.5 text-[30px] font-bold leading-[1.1] tracking-[-0.02em] ${valueColor}`}
       >
@@ -195,6 +200,19 @@ function StatTile({
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
         {label}
       </p>
-    </div>
+    </>
   );
+
+  const className =
+    "rounded-[10px] border border-border bg-card px-5 pt-5 pb-[18px] shadow-card";
+
+  if (href) {
+    return (
+      <Link href={href} className={`${className} transition-colors hover:border-accent`}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }

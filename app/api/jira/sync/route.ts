@@ -97,12 +97,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ jiraIssueKey: key, jiraUrl: url });
   } catch (err) {
     // Not connected at all - no Jira request was ever attempted, so route
-    // the client back to the Raise a ticket tab rather than logging a
+    // the client back to the Tickets tab rather than logging a
     // failed sync (rules.md section 2).
     if (err instanceof JiraNotConnectedError) {
       return NextResponse.json(
         {
-          error: "Jira is not connected — connect it on the Raise a ticket tab",
+          error: "Jira is not connected — connect it on the Tickets tab",
           code: "NOT_CONNECTED",
         },
         { status: 400 }

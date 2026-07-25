@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const storedState = request.cookies.get(STATE_COOKIE)?.value;
 
   const failureUrl = (reason: string) =>
-    new URL(`/raise-a-ticket?jira_error=${encodeURIComponent(reason)}`, request.url);
+    new URL(`/tickets?jira_error=${encodeURIComponent(reason)}`, request.url);
 
   if (oauthError) {
     return NextResponse.redirect(failureUrl(oauthError));
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     // If connect was initiated from RaiseATicketModal, return to that same
     // action item's row on the Action Items tab with the modal reopened,
-    // rather than the standalone Raise a ticket tab (architecture.md section
+    // rather than the standalone Tickets tab (architecture.md section
     // 5) — ticket creation lives there now, not on Review & Edit.
     const actionItemId = decodeOAuthState(state)?.actionItemId ?? null;
     const actionItem = actionItemId
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     const successUrl = actionItem
       ? new URL(`/action-items?openTicketModal=${actionItemId}`, request.url)
-      : new URL("/raise-a-ticket", request.url);
+      : new URL("/tickets", request.url);
 
     const response = NextResponse.redirect(successUrl);
     response.cookies.delete(STATE_COOKIE);

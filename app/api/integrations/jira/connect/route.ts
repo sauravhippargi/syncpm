@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   // Present when connect was initiated from inside RaiseATicketModal, so the
   // callback can send the user back to that same action item instead of the
-  // standalone Raise a ticket tab.
+  // standalone Tickets tab.
   const actionItemId = request.nextUrl.searchParams.get("actionItemId");
   const state = encodeOAuthState(actionItemId);
   const redirectUri = `${new URL(request.url).origin}/api/integrations/jira/callback`;

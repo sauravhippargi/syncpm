@@ -10,5 +10,5 @@ export async function POST(request: NextRequest) {
 
   await prisma.jiraConnection.deleteMany({ where: { userId: session.user.id } });
 
-  return NextResponse.redirect(new URL("/raise-a-ticket", request.url));
+  return NextResponse.redirect(new URL("/tickets", request.url));
 }

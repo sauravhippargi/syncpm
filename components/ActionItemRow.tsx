@@ -38,7 +38,7 @@ export default function ActionItemRow({
     <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col">
-          <span className="mb-1.5 text-[14.5px] font-semibold text-text-primary">
+          <span className="mb-1.5 text-[14.5px] font-normal text-text-primary">
             {item.description || "Untitled action item"}
           </span>
           <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">

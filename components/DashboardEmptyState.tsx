@@ -26,15 +26,9 @@ export default function DashboardEmptyState({
 
   return (
     <div className="flex min-h-[60vh] flex-1 flex-col items-center justify-center gap-8 px-6 py-16 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
-          Welcome to SyncPM
-        </h2>
-        <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
-          Turn meeting transcripts into tracked action items, owners, and real
-          Jira tickets.
-        </p>
-      </div>
+      <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
+        Welcome to SyncPM
+      </h2>
 
       <div className="grid w-full max-w-lg grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col items-center gap-3 rounded-[10px] border border-accent bg-card p-6 shadow-card">

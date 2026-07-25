@@ -15,7 +15,7 @@ const JIRA_ERROR_MESSAGES: Record<string, string> = {
     "Failed to complete the Jira connection — try again.",
 };
 
-export default async function RaiseATicketPage({
+export default async function TicketsPage({
   searchParams,
 }: {
   searchParams: Promise<{ jira_error?: string }>;
@@ -43,14 +43,9 @@ export default async function RaiseATicketPage({
 
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
-          Raise a ticket
-        </h1>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Connect a tool to turn approved action items into real tickets.
-        </p>
-      </div>
+      <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
+        Tickets
+      </h1>
 
       {errorMessage && (
         <p className="rounded-[10px] border border-danger-tint bg-danger-tint px-3 py-2 text-[13px] font-medium text-danger">
@@ -82,7 +77,7 @@ export default async function RaiseATicketPage({
           </div>
 
           <div className="flex flex-col gap-3">
-            <p className="text-[12px] font-medium text-text-secondary">
+            <p className="text-[14px] font-semibold text-text-primary">
               Recently created tickets
             </p>
 

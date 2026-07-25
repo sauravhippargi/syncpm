@@ -27,15 +27,9 @@ export default async function DeadlinesPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
-          Deadlines
-        </h1>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Every open action item with a due date, across all your
-          transcripts, soonest first.
-        </p>
-      </div>
+      <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
+        Deadlines
+      </h1>
 
       {items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
@@ -62,7 +56,7 @@ export default async function DeadlinesPage() {
                   className="flex flex-col py-3 first:pt-0 last:pb-0"
                 >
                   <div className="mb-1.5 flex items-start justify-between gap-4">
-                    <span className="text-[14.5px] font-semibold text-text-primary">
+                    <span className="text-[14.5px] font-normal text-text-primary">
                       {item.description || "Untitled action item"}
                     </span>
                     <span
