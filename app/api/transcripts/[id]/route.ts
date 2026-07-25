@@ -54,3 +54,42 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
+  const { id } = await params;
+
+  const existing = await prisma.transcript.findFirst({
+    where: { id, userId: session.user.id },
+  });
+  if (!existing) {
+    return NextResponse.json(
+      { error: "Transcript not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
+
+  try {
+    // action_items and jira_sync_log rows cascade-delete via the FK
+    // constraints in schema.prisma — this only ever touches SyncPM's own
+    // records, never the Jira API.
+    await prisma.transcript.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to delete transcript", err);
+    return NextResponse.json(
+      { error: "Failed to delete transcript", code: "DB_ERROR" },
+      { status: 500 }
+    );
+  }
+}

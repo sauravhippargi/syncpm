@@ -64,7 +64,7 @@ model ActionItem {
   blockerNote  String?   @map("blocker_note")
   isApproved   Boolean   @default(false) @map("is_approved")
 
-  transcript   Transcript    @relation(fields: [transcriptId], references: [id])
+  transcript   Transcript    @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
   jiraSyncLogs JiraSyncLog[]
 
   @@map("action_items")
@@ -78,7 +78,7 @@ model JiraSyncLog {
   status       String // "synced" | "failed"
   syncedAt     DateTime @default(now()) @map("synced_at")
 
-  actionItem ActionItem @relation(fields: [actionItemId], references: [id])
+  actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
 
   @@map("jira_sync_log")
 }

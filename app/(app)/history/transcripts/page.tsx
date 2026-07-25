@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import DeleteTranscriptButton from "@/components/DeleteTranscriptButton";
 
 export default async function TranscriptHistoryPage() {
   const session = await auth();
@@ -47,10 +48,13 @@ export default async function TranscriptHistoryPage() {
               (item) => item.isBlocker
             ).length;
             return (
-              <li key={transcript.id}>
+              <li
+                key={transcript.id}
+                className="flex items-center gap-2 rounded-[10px] border border-border bg-card p-4 transition-colors hover:border-accent"
+              >
                 <Link
                   href={`/review/${transcript.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[10px] border border-border bg-card p-4 transition-colors hover:border-accent"
+                  className="flex flex-1 items-center justify-between gap-4"
                 >
                   <div className="flex flex-col gap-1">
                     <span className="text-[14px] font-medium text-text-primary">
@@ -72,6 +76,11 @@ export default async function TranscriptHistoryPage() {
                     )}
                   </div>
                 </Link>
+                <DeleteTranscriptButton
+                  transcriptId={transcript.id}
+                  title={transcript.title || "Untitled meeting"}
+                  actionItemCount={transcript.actionItems.length}
+                />
               </li>
             );
           })}
