@@ -118,6 +118,63 @@ export async function deleteWebhook(
   }
 }
 
+export interface FathomMeetingSummary {
+  recordingId: number;
+  title: string | null;
+  meetingTitle: string | null;
+}
+
+// Safety cap on pagination — a personal account's recent-meetings window is
+// small in practice; this just guards against an unexpected runaway loop.
+const MAX_LIST_PAGES = 20;
+
+// Lists meetings created on/after `createdAfter`, paginating through every
+// page via `cursor` (PRD 6.7 — manual "Sync recent Fathom meetings" backfill,
+// covering meetings recorded before a connection existed or a webhook
+// delivery that failed).
+export async function listRecentMeetings(
+  apiKey: string,
+  createdAfter: Date
+): Promise<FathomMeetingSummary[]> {
+  const meetings: FathomMeetingSummary[] = [];
+  let cursor: string | null = null;
+  let page = 0;
+
+  do {
+    const params = new URLSearchParams({
+      created_after: createdAfter.toISOString(),
+    });
+    if (cursor) params.set("cursor", cursor);
+
+    const res = await fathomFetch(apiKey, `/meetings?${params.toString()}`);
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new FathomRequestError(
+        "Failed to list Fathom meetings",
+        res.status,
+        body
+      );
+    }
+
+    const items = Array.isArray(body?.items) ? body.items : [];
+    for (const item of items) {
+      if (typeof item?.recording_id === "number") {
+        meetings.push({
+          recordingId: item.recording_id,
+          title: typeof item.title === "string" ? item.title : null,
+          meetingTitle:
+            typeof item.meeting_title === "string" ? item.meeting_title : null,
+        });
+      }
+    }
+
+    cursor = typeof body?.next_cursor === "string" ? body.next_cursor : null;
+    page++;
+  } while (cursor && page < MAX_LIST_PAGES);
+
+  return meetings;
+}
+
 interface FathomTranscriptLine {
   speaker?: { display_name?: string };
   text: string;

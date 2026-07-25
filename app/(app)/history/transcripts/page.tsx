@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import DeleteTranscriptButton from "@/components/DeleteTranscriptButton";
+import FathomBackfillButton from "@/components/FathomBackfillButton";
 
 export default async function TranscriptHistoryPage() {
   const session = await auth();
@@ -10,22 +11,28 @@ export default async function TranscriptHistoryPage() {
     redirect("/");
   }
 
-  const transcripts = await prisma.transcript.findMany({
-    where: { userId: session.user.id },
-    include: { actionItems: true },
-    orderBy: { uploadedAt: "desc" },
-  });
+  const [transcripts, fathomConnection] = await Promise.all([
+    prisma.transcript.findMany({
+      where: { userId: session.user.id },
+      include: { actionItems: true },
+      orderBy: { uploadedAt: "desc" },
+    }),
+    prisma.fathomConnection.findUnique({ where: { userId: session.user.id } }),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
-          Transcript history
-        </h1>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Every meeting you&apos;ve uploaded, with its extracted action items
-          and blockers.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+            Transcript history
+          </h1>
+          <p className="text-[13px] leading-[1.4] text-text-secondary">
+            Every meeting you&apos;ve uploaded, with its extracted action items
+            and blockers.
+          </p>
+        </div>
+        {fathomConnection && <FathomBackfillButton />}
       </div>
 
       {transcripts.length === 0 ? (
