@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isBlockerNote } from "@/lib/action-items";
+import DashboardEmptyState from "@/components/DashboardEmptyState";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -10,25 +11,32 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const transcripts = await prisma.transcript.findMany({
-    where: { userId: session.user.id },
-    include: { actionItems: { include: { jiraSyncLogs: true } } },
-    orderBy: { uploadedAt: "desc" },
-  });
+  const [transcripts, fathomConnection] = await Promise.all([
+    prisma.transcript.findMany({
+      where: { userId: session.user.id },
+      include: { actionItems: { include: { jiraSyncLogs: true } } },
+      orderBy: { uploadedAt: "desc" },
+    }),
+    prisma.fathomConnection.findUnique({ where: { userId: session.user.id } }),
+  ]);
+
+  const header = (
+    <div className="flex flex-col gap-1">
+      <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+        Dashboard
+      </h1>
+      <p className="text-[13px] leading-[1.4] text-text-secondary">
+        An overview of your open action items, blockers, and Jira sync
+        status.
+      </p>
+    </div>
+  );
 
   if (transcripts.length === 0) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
-          No transcripts yet — upload your first meeting to start extracting
-          action items, blockers, and tickets.
-        </p>
-        <Link
-          href="/upload"
-          className="flex h-8 items-center rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
-        >
-          Upload a transcript
-        </Link>
+      <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
+        {header}
+        <DashboardEmptyState fathomConnected={!!fathomConnection} />
       </main>
     );
   }
@@ -56,15 +64,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
-          Dashboard
-        </h1>
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
-          An overview of your open action items, blockers, and Jira sync
-          status.
-        </p>
-      </div>
+      {header}
 
       <div className="grid grid-cols-3 gap-3">
         <StatTile label="Open action items" value={openItems.length} />
