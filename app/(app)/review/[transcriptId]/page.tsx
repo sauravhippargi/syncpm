@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import ReviewScreen from "@/components/ReviewScreen";
+import TranscriptTitle from "@/components/TranscriptTitle";
 import type { ActionItem } from "@/components/ActionItemCard";
 
 export default async function ReviewPage({
@@ -36,9 +37,10 @@ export default async function ReviewPage({
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
-          {transcript.title || "Untitled meeting"}
-        </h1>
+        <TranscriptTitle
+          transcriptId={transcript.id}
+          initialTitle={transcript.title ?? ""}
+        />
         <p className="text-[13px] leading-[1.4] text-text-secondary">
           Uploaded {transcript.uploadedAt.toLocaleString()} — review, edit, or add action items
           below.
