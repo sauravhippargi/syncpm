@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                 <li key={t.id}>
                   <Link
                     href={`/review/${t.id}`}
-                    className="group flex flex-col gap-0.5 py-2.5 first:pt-0 last:pb-0"
+                    className="group flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0"
                   >
                     <span className="truncate text-[13px] font-medium text-text-primary group-hover:text-accent">
                       {t.title || "Untitled meeting"}
@@ -125,24 +125,22 @@ export default async function DashboardPage() {
               No open items with a due date.
             </p>
           ) : (
-            <ul className="mt-3 flex flex-col gap-2">
+            <ul className="mt-3 flex flex-col divide-y divide-border">
               {upcomingDeadlines.map((item) => {
                 const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
                 const overdue = dueDateUTC !== undefined && dueDateUTC < todayUTC;
                 return (
                   <li
                     key={item.id}
-                    className="flex items-center justify-between gap-3 text-[13px]"
+                    className="flex items-start justify-between gap-3 py-3.5 text-[13px] first:pt-0 last:pb-0"
                   >
-                    <span className="text-text-primary">
+                    <span className="leading-[1.4] text-text-primary">
                       {item.description || "Untitled action item"}
                     </span>
                     <span
-                      className={
-                        overdue
-                          ? "font-medium text-danger"
-                          : "text-text-secondary"
-                      }
+                      className={`shrink-0 ${
+                        overdue ? "font-medium text-danger" : "text-text-secondary"
+                      }`}
                     >
                       {item.dueDate?.toLocaleDateString(undefined, {
                         timeZone: "UTC",
