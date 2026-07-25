@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+} from "react";
 import {
   ALLOWED_EXTENSIONS,
   MAX_TRANSCRIPT_BYTES,
@@ -27,15 +33,14 @@ export default function TranscriptUploader() {
   const [pastedText, setPastedText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<"idle" | "saving" | "extracting">("idle");
   const [error, setError] = useState<UploadError | null>(null);
 
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0] ?? null;
+  function validateAndSetFile(selected: File) {
     setFile(null);
     setFileError(null);
-    if (!selected) return;
 
     const ext = extensionFromFilename(selected.name);
     if (!isAllowedExtension(ext)) {
@@ -49,6 +54,19 @@ export default function TranscriptUploader() {
       return;
     }
     setFile(selected);
+  }
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    validateAndSetFile(selected);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragOver(false);
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped) validateAndSetFile(dropped);
   }
 
   function readFileAsText(f: File): Promise<string> {
@@ -195,22 +213,41 @@ export default function TranscriptUploader() {
           className="rounded-[10px] border border-border bg-card p-3 text-[14px] leading-[1.5] text-text-primary outline-none focus:border-accent"
         />
       ) : (
-        <div className="flex flex-col gap-2 rounded-[10px] border border-dashed border-border bg-card p-4">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          className={`flex flex-col gap-2 rounded-[10px] border border-dashed bg-card p-4 transition-colors ${
+            isDragOver ? "border-accent" : "border-border"
+          }`}
+        >
           <input
             ref={fileInputRef}
             type="file"
             accept=".txt,.vtt,.srt"
             onChange={handleFileChange}
-            className="text-[13px] text-text-secondary"
+            className="sr-only"
           />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-8 shrink-0 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary"
+            >
+              Choose file
+            </button>
+            <p className="truncate text-[13px] text-text-primary">
+              {file
+                ? `${file.name} (${Math.ceil(file.size / 1024)} KB)`
+                : "No file chosen — or drag one here"}
+            </p>
+          </div>
           <p className="text-[11px] leading-[1.3] text-text-secondary">
             .txt, .vtt, or .srt — up to 2MB
           </p>
-          {file && (
-            <p className="text-[13px] leading-[1.4] text-text-primary">
-              Selected: {file.name} ({Math.ceil(file.size / 1024)} KB)
-            </p>
-          )}
           {fileError && (
             <p className="text-[12px] font-medium leading-[1.3] text-danger">{fileError}</p>
           )}
