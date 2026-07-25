@@ -34,7 +34,7 @@ export default async function DashboardPage() {
 
   if (transcripts.length === 0) {
     return (
-      <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
+      <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
         {header}
         <DashboardEmptyState fathomConnected={!!fathomConnection} />
       </main>
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
   const todayUTC = new Date().toISOString().slice(0, 10);
 
   return (
-    <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       {header}
 
       <div className="grid grid-cols-3 gap-3">

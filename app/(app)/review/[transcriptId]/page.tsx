@@ -37,7 +37,7 @@ export default async function ReviewPage({
   }));
 
   return (
-    <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
         <TranscriptTitle
           transcriptId={transcript.id}
