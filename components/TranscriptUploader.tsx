@@ -14,6 +14,7 @@ import {
   extensionFromFilename,
   isAllowedExtension,
 } from "@/lib/transcript";
+import ExtractionLoader from "./ExtractionLoader";
 
 type Mode = "paste" | "file";
 
@@ -35,7 +36,6 @@ export default function TranscriptUploader() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState<"idle" | "saving" | "extracting">("idle");
   const [error, setError] = useState<UploadError | null>(null);
 
   function validateAndSetFile(selected: File) {
@@ -79,7 +79,6 @@ export default function TranscriptUploader() {
   }
 
   async function runExtraction(transcriptId: string) {
-    setStep("extracting");
     try {
       const res = await fetch("/api/extract", {
         method: "POST",
@@ -110,7 +109,6 @@ export default function TranscriptUploader() {
       });
     } finally {
       setSubmitting(false);
-      setStep("idle");
     }
   }
 
@@ -137,7 +135,6 @@ export default function TranscriptUploader() {
     }
 
     setSubmitting(true);
-    setStep("saving");
 
     try {
       const res = await fetch("/api/transcripts", {
@@ -150,7 +147,6 @@ export default function TranscriptUploader() {
       if (!res.ok) {
         setError({ message: data.error || "Failed to save transcript" });
         setSubmitting(false);
-        setStep("idle");
         return;
       }
 
@@ -160,8 +156,15 @@ export default function TranscriptUploader() {
         message: "Failed to save transcript — check your connection and try again",
       });
       setSubmitting(false);
-      setStep("idle");
     }
+  }
+
+  if (submitting) {
+    return (
+      <div className="w-full max-w-xl">
+        <ExtractionLoader />
+      </div>
+    );
   }
 
   return (
@@ -294,14 +297,9 @@ export default function TranscriptUploader() {
 
       <button
         type="submit"
-        disabled={submitting}
-        className="h-8 self-start rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white disabled:opacity-50"
+        className="h-8 self-start rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
       >
-        {step === "saving"
-          ? "Saving transcript…"
-          : step === "extracting"
-            ? "Extracting action items…"
-            : "Extract action items"}
+        Extract action items
       </button>
     </form>
   );
