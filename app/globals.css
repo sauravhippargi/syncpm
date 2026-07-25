@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Design tokens from design.md — Tailwind v4 CSS-based theme (no dark mode in v1) */
+@theme inline {
+  --font-sans: var(--font-inter);
+
+  --color-page: #f6f7f9;
+  --color-card: #ffffff;
+  --color-border: #e4e7ec;
+  --color-text-primary: #101828;
+  --color-text-secondary: #667085;
+
+  --color-accent: #2454ff;
+  --color-accent-tint: #eef4ff;
+
+  --color-warning: #b54708;
+  --color-warning-tint: #fff4e5;
+  --color-success: #067647;
+  --color-success-tint: #ecfdf3;
+  --color-danger: #b42318;
+  --color-danger-tint: #fef3f2;
+}

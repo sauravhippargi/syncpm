@@ -1,0 +1,51 @@
+// SyncPM Prisma schema — data model per architecture.md section 4
+// learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Transcript {
+  id         String   @id @default(cuid())
+  title      String?
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+  rawText    String   @map("raw_text")
+
+  actionItems ActionItem[]
+
+  @@map("transcripts")
+}
+
+model ActionItem {
+  id           String    @id @default(cuid())
+  transcriptId String    @map("transcript_id")
+  description  String
+  owner        String?
+  dueDate      DateTime? @map("due_date")
+  status       String    @default("open") // "open" | "done"
+  isBlocker    Boolean   @default(false) @map("is_blocker")
+  blockerNote  String?   @map("blocker_note")
+
+  transcript   Transcript    @relation(fields: [transcriptId], references: [id])
+  jiraSyncLogs JiraSyncLog[]
+
+  @@map("action_items")
+}
+
+model JiraSyncLog {
+  id           String   @id @default(cuid())
+  actionItemId String   @map("action_item_id")
+  jiraIssueKey String?  @map("jira_issue_key")
+  jiraUrl      String?  @map("jira_url")
+  status       String // "synced" | "failed"
+  syncedAt     DateTime @default(now()) @map("synced_at")
+
+  actionItem ActionItem @relation(fields: [actionItemId], references: [id])
+
+  @@map("jira_sync_log")
+}
