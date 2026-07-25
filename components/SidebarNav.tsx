@@ -35,13 +35,16 @@ export default function SidebarNav() {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-[13px] font-medium transition-colors ${
-              isActive
-                ? "bg-accent-tint text-accent"
-                : "text-text-secondary hover:bg-page"
+              isActive ? "bg-accent-tint" : "text-text-secondary hover:bg-page"
             }`}
           >
-            <Icon size={16} className="shrink-0" />
-            {item.label}
+            <Icon
+              size={16}
+              className={`shrink-0 ${isActive ? "text-accent" : ""}`}
+            />
+            <span className={isActive ? "text-sidebar-selected-text" : ""}>
+              {item.label}
+            </span>
           </Link>
         );
       })}

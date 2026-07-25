@@ -58,7 +58,7 @@ export default async function TranscriptHistoryPage() {
             return (
               <li
                 key={transcript.id}
-                className="flex items-center gap-2 rounded-[10px] border border-border bg-card p-4 transition-colors hover:border-accent"
+                className="flex items-center gap-2 rounded-[10px] border border-border bg-card p-4 shadow-card transition-colors hover:border-accent"
               >
                 <Link
                   href={`/review/${transcript.id}`}
@@ -73,7 +73,7 @@ export default async function TranscriptHistoryPage() {
                         className={`rounded-[4px] px-1.5 py-0.5 text-[10px] font-medium ${
                           transcript.source === "fathom"
                             ? "bg-accent-tint text-accent"
-                            : "bg-page text-text-secondary"
+                            : "bg-neutral-pill-bg text-neutral-pill-text"
                         }`}
                       >
                         {transcript.source === "fathom" ? "Fathom" : "Manual"}
@@ -89,7 +89,7 @@ export default async function TranscriptHistoryPage() {
                       {transcript.actionItems.length === 1 ? "" : "s"}
                     </span>
                     {blockerCount > 0 && (
-                      <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning">
+                      <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
                         {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
                       </span>
                     )}

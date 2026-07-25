@@ -67,7 +67,7 @@ export default function SourceConnectorRow({
           </button>
         ))}
         {activeMessage && (
-          <span className="rounded-[6px] bg-page px-2 py-1 text-[11px] font-medium text-text-secondary">
+          <span className="rounded-[6px] bg-neutral-pill-bg px-2 py-1 text-[11px] font-medium text-neutral-pill-text">
             {activeMessage}
           </span>
         )}

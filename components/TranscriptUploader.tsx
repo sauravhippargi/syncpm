@@ -213,7 +213,7 @@ export default function TranscriptUploader() {
           onChange={(e) => setPastedText(e.target.value)}
           placeholder="Paste the meeting transcript here..."
           rows={12}
-          className="rounded-[10px] border border-border bg-card p-3 text-[14px] leading-[1.5] text-text-primary outline-none focus:border-accent"
+          className="rounded-[10px] border border-border bg-card p-3 text-[14px] leading-[1.5] text-text-primary shadow-card outline-none focus:border-accent"
         />
       ) : (
         <div

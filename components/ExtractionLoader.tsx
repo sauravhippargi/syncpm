@@ -26,13 +26,13 @@ export default function ExtractionLoader() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-[10px] border border-border bg-card px-6 py-10 text-center">
+    <div className="flex flex-col items-center gap-4 rounded-[10px] border border-border bg-card px-6 py-10 shadow-card text-center">
       <div className="relative h-12 w-12">
         <div
           className="absolute inset-0 animate-spin rounded-full"
           style={{
             background:
-              "conic-gradient(#2454FF 0deg, #2454FF 90deg, transparent 90deg, transparent 360deg)",
+              "conic-gradient(#635BFF 0deg, #635BFF 90deg, transparent 90deg, transparent 360deg)",
             WebkitMask:
               "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))",
             mask: "radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px))",

@@ -58,7 +58,7 @@ export default function DeleteActionItemButton({
             if (e.target === e.currentTarget && !deleting) setOpen(false);
           }}
         >
-          <div className="flex w-full max-w-sm flex-col gap-4 rounded-[10px] border border-border bg-card p-6">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-[10px] border border-border bg-card p-6 shadow-card">
             <div className="flex flex-col gap-1.5">
               <h2 className="text-[14px] font-medium leading-[1.4] text-text-primary">
                 Delete this action item?

@@ -9,7 +9,7 @@ interface ConnectorCardProps {
 
 function ComingSoonCard({ slug, name, description }: ConnectorCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 opacity-60">
+    <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 shadow-card opacity-60">
       <div className="flex items-center gap-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-page">
           <BrandIcon slug={slug} className="h-4 w-4" />
@@ -17,7 +17,7 @@ function ComingSoonCard({ slug, name, description }: ConnectorCardProps) {
         <span className="text-[14px] font-medium text-text-primary">
           {name}
         </span>
-        <span className="ml-auto rounded-[6px] bg-page px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+        <span className="ml-auto rounded-[6px] bg-neutral-pill-bg px-2 py-0.5 text-[11px] font-medium text-neutral-pill-text">
           Coming soon
         </span>
       </div>
@@ -42,7 +42,7 @@ export default function ConnectorPicker({
 }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4">
+      <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 shadow-card">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-accent-tint">
             <BrandIcon slug="jira" className="h-4 w-4" />

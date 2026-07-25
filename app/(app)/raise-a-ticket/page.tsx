@@ -62,7 +62,7 @@ export default async function RaiseATicketPage({
         <ConnectorPicker />
       ) : (
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-4 rounded-[10px] border border-border bg-card p-4">
+          <div className="flex flex-col gap-4 rounded-[10px] border border-border bg-card p-4 shadow-card">
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-col gap-1">
                 <p className="text-[12px] font-medium text-text-secondary">
@@ -95,7 +95,7 @@ export default async function RaiseATicketPage({
                 {recentTickets.map((log) => (
                   <li
                     key={log.id}
-                    className="flex items-center justify-between gap-3 rounded-[10px] border border-border bg-card px-4 py-3"
+                    className="flex items-center justify-between gap-3 rounded-[10px] border border-border bg-card px-4 py-3 shadow-card"
                   >
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[13px] font-medium text-text-primary">

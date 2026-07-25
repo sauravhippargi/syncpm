@@ -37,7 +37,7 @@ export default function DashboardEmptyState({
       </div>
 
       <div className="grid w-full max-w-lg grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col items-center gap-3 rounded-[10px] border border-accent bg-card p-6">
+        <div className="flex flex-col items-center gap-3 rounded-[10px] border border-accent bg-card p-6 shadow-card">
           <span className="rounded-[6px] bg-accent px-2 py-0.5 text-[11px] font-medium text-white">
             Recommended
           </span>
@@ -61,7 +61,7 @@ export default function DashboardEmptyState({
           </button>
         </div>
 
-        <div className="flex flex-col items-center gap-3 rounded-[10px] border border-border bg-card p-6">
+        <div className="flex flex-col items-center gap-3 rounded-[10px] border border-border bg-card p-6 shadow-card">
           <span className="flex h-10 w-10 items-center justify-center rounded-[6px] bg-page">
             <Upload size={20} className="text-text-secondary" />
           </span>

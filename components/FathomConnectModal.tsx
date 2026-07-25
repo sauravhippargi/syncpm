@@ -73,7 +73,7 @@ export default function FathomConnectModal({
         if (e.target === e.currentTarget && !busy) onClose();
       }}
     >
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-[10px] border border-border bg-card p-6">
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-[10px] border border-border bg-card p-6 shadow-card">
         <div className="flex flex-col gap-1">
           <h2 className="text-[14px] font-medium leading-[1.4] text-text-primary">
             Fathom

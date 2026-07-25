@@ -35,7 +35,7 @@ export default function ActionItemCard({
   onDeleted: () => void;
 }) {
   return (
-    <div className="flex gap-3 rounded-[10px] border border-border bg-card px-4 py-3.5">
+    <div className="flex gap-3 rounded-[10px] border border-border bg-card px-4 py-3.5 shadow-card">
       <input
         type="checkbox"
         checked={selected}

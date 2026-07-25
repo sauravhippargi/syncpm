@@ -58,7 +58,7 @@ export default async function DeadlinesPage() {
             return (
               <li
                 key={item.id}
-                className="flex flex-col gap-2 rounded-[10px] border border-border bg-card p-4"
+                className="flex flex-col gap-2 rounded-[10px] border border-border bg-card p-4 shadow-card"
               >
                 <div className="flex items-start justify-between gap-4">
                   <span className="text-[14px] font-medium text-text-primary">
@@ -81,7 +81,7 @@ export default async function DeadlinesPage() {
                     {item.owner || "Unassigned"}
                   </span>
                   {isBlockerNote(item.blockerNote) && (
-                    <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning">
+                    <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
                       Blocker
                     </span>
                   )}

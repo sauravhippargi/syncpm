@@ -77,11 +77,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
-        <div className="rounded-[10px] border border-border bg-card p-4">
+        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
           <p className="text-[12px] font-medium text-text-secondary">
             Recent transcripts
           </p>
-          <ul className="mt-3 flex flex-col divide-y divide-border">
+          <ul className="mt-3 flex flex-col divide-y divide-row-divider">
             {recentTranscripts.map((t) => {
               const blockerCount = t.actionItems.filter((item) =>
                 isBlockerNote(item.blockerNote)
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
           </ul>
         </div>
 
-        <div className="rounded-[10px] border border-border bg-card p-4">
+        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
           <div className="flex items-center justify-between">
             <p className="text-[12px] font-medium text-text-secondary">
               Upcoming deadlines
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
               No open items with a due date.
             </p>
           ) : (
-            <ul className="mt-3 flex flex-col divide-y divide-border">
+            <ul className="mt-3 flex flex-col divide-y divide-row-divider">
               {upcomingDeadlines.map((item) => {
                 const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
                 const overdue = dueDateUTC !== undefined && dueDateUTC < todayUTC;
@@ -175,7 +175,7 @@ function StatTile({
         : "text-text-primary";
 
   return (
-    <div className="rounded-[10px] border border-border bg-card p-4">
+    <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
       <p className="text-[12px] font-medium text-text-secondary">{label}</p>
       <p className={`mt-1 text-[19px] font-semibold ${valueColor}`}>
         {value}

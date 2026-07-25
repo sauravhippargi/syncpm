@@ -61,7 +61,7 @@ export default function AuthForm() {
   }
 
   return (
-    <div className="w-full max-w-[360px] rounded-[10px] border border-border bg-card p-6">
+    <div className="w-full max-w-[360px] rounded-[10px] border border-border bg-card p-6 shadow-card">
       <div className="mb-5 flex rounded-[6px] border border-border p-1">
         <button
           type="button"

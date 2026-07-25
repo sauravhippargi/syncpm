@@ -35,7 +35,7 @@ export default function ActionItemRow({
   const router = useRouter();
 
   return (
-    <li className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4">
+    <li className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 shadow-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <span className="text-[14px] font-medium text-text-primary">
@@ -53,7 +53,7 @@ export default function ActionItemRow({
               </span>
             )}
             {isBlockerNote(item.blockerNote) && (
-              <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning">
+              <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
                 Blocker
               </span>
             )}
