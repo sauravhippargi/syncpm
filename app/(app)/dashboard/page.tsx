@@ -41,15 +41,12 @@ export default async function DashboardPage() {
     0
   );
 
-  const mostRecent = transcripts[0];
-  const recentBlockerCount = mostRecent.actionItems.filter(
-    (item) => item.isBlocker
-  ).length;
+  const recentTranscripts = transcripts.slice(0, 5);
 
   const upcomingDeadlines = openItems
     .filter((item) => item.dueDate)
     .sort((a, b) => a.dueDate!.getTime() - b.dueDate!.getTime())
-    .slice(0, 3);
+    .slice(0, 10);
 
   // Due dates are date-only values stored at UTC midnight — format and compare
   // them in UTC so the calendar date shown never shifts based on the
@@ -81,22 +78,33 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
         <div className="rounded-[10px] border border-border bg-card p-4">
           <p className="text-[12px] font-medium text-text-secondary">
-            Most recent transcript
+            Recent transcripts
           </p>
-          <h2 className="mt-1 text-[14px] font-medium text-text-primary">
-            {mostRecent.title || "Untitled meeting"}
-          </h2>
-          <p className="mt-1 text-[13px] text-text-secondary">
-            {mostRecent.actionItems.length} action item
-            {mostRecent.actionItems.length === 1 ? "" : "s"} ·{" "}
-            {recentBlockerCount} blocker{recentBlockerCount === 1 ? "" : "s"}
-          </p>
-          <Link
-            href={`/review/${mostRecent.id}`}
-            className="mt-3 inline-flex h-8 items-center rounded-[6px] border border-border px-3 text-[12px] font-medium text-text-primary"
-          >
-            View details
-          </Link>
+          <ul className="mt-3 flex flex-col divide-y divide-border">
+            {recentTranscripts.map((t) => {
+              const blockerCount = t.actionItems.filter(
+                (item) => item.isBlocker
+              ).length;
+              return (
+                <li key={t.id}>
+                  <Link
+                    href={`/review/${t.id}`}
+                    className="group flex flex-col gap-0.5 py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <span className="truncate text-[13px] font-medium text-text-primary group-hover:text-accent">
+                      {t.title || "Untitled meeting"}
+                    </span>
+                    <span className="text-[11px] text-text-secondary">
+                      {t.actionItems.length} action item
+                      {t.actionItems.length === 1 ? "" : "s"} ·{" "}
+                      {blockerCount} blocker{blockerCount === 1 ? "" : "s"} ·{" "}
+                      {t.uploadedAt.toLocaleString()}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
         <div className="rounded-[10px] border border-border bg-card p-4">
