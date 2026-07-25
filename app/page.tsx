@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import AuthForm from "@/components/AuthForm";
@@ -29,10 +30,14 @@ export default async function Home() {
   return (
     <main className="flex flex-1 flex-col lg:flex-row">
       <section className="flex flex-1 flex-col justify-center gap-8 bg-card px-8 py-16 lg:px-16">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
-            SyncPM
-          </h1>
+        <div className="flex flex-col gap-3">
+          <Image
+            src="/logo-full.png"
+            alt="SyncPM"
+            width={160}
+            height={160}
+            priority
+          />
           <p className="max-w-md text-[14px] leading-[1.5] text-text-secondary">
             Turns cross-functional meeting transcripts into tracked action
             items, assigned owners, flagged blockers, and real Jira tickets.
