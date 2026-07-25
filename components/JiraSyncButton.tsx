@@ -56,15 +56,7 @@ export default function JiraSyncButton({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary"
-        >
-          {sync?.status === "synced" ? "Re-raise a ticket" : "Raise a ticket"}
-        </button>
-
-        {sync?.status === "synced" && sync.jiraUrl && (
+        {sync?.status === "synced" && sync.jiraUrl ? (
           <a
             href={sync.jiraUrl}
             target="_blank"
@@ -73,6 +65,14 @@ export default function JiraSyncButton({
           >
             Synced — {sync.jiraIssueKey}
           </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary"
+          >
+            Raise a ticket
+          </button>
         )}
 
         {sync?.status === "failed" && (
