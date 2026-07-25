@@ -57,7 +57,7 @@ export default async function DashboardPage() {
   const todayUTC = new Date().toISOString().slice(0, 10);
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
         <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
           Dashboard
@@ -78,72 +78,74 @@ export default async function DashboardPage() {
         <StatTile label="Synced to Jira" value={syncedCount} tone="success" />
       </div>
 
-      <div className="rounded-[10px] border border-border bg-card p-4">
-        <p className="text-[12px] font-medium text-text-secondary">
-          Most recent transcript
-        </p>
-        <h2 className="mt-1 text-[14px] font-medium text-text-primary">
-          {mostRecent.title || "Untitled meeting"}
-        </h2>
-        <p className="mt-1 text-[13px] text-text-secondary">
-          {mostRecent.actionItems.length} action item
-          {mostRecent.actionItems.length === 1 ? "" : "s"} ·{" "}
-          {recentBlockerCount} blocker{recentBlockerCount === 1 ? "" : "s"}
-        </p>
-        <Link
-          href={`/review/${mostRecent.id}`}
-          className="mt-3 inline-flex h-8 items-center rounded-[6px] border border-border px-3 text-[12px] font-medium text-text-primary"
-        >
-          View details
-        </Link>
-      </div>
-
-      <div className="rounded-[10px] border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
+        <div className="rounded-[10px] border border-border bg-card p-4">
           <p className="text-[12px] font-medium text-text-secondary">
-            Upcoming deadlines
+            Most recent transcript
+          </p>
+          <h2 className="mt-1 text-[14px] font-medium text-text-primary">
+            {mostRecent.title || "Untitled meeting"}
+          </h2>
+          <p className="mt-1 text-[13px] text-text-secondary">
+            {mostRecent.actionItems.length} action item
+            {mostRecent.actionItems.length === 1 ? "" : "s"} ·{" "}
+            {recentBlockerCount} blocker{recentBlockerCount === 1 ? "" : "s"}
           </p>
           <Link
-            href="/deadlines"
-            className="text-[12px] font-medium text-accent"
+            href={`/review/${mostRecent.id}`}
+            className="mt-3 inline-flex h-8 items-center rounded-[6px] border border-border px-3 text-[12px] font-medium text-text-primary"
           >
-            View all
+            View details
           </Link>
         </div>
 
-        {upcomingDeadlines.length === 0 ? (
-          <p className="mt-3 text-[13px] text-text-secondary">
-            No open items with a due date.
-          </p>
-        ) : (
-          <ul className="mt-3 flex flex-col gap-2">
-            {upcomingDeadlines.map((item) => {
-              const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
-              const overdue = dueDateUTC !== undefined && dueDateUTC < todayUTC;
-              return (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 text-[13px]"
-                >
-                  <span className="text-text-primary">
-                    {item.description || "Untitled action item"}
-                  </span>
-                  <span
-                    className={
-                      overdue
-                        ? "font-medium text-danger"
-                        : "text-text-secondary"
-                    }
+        <div className="rounded-[10px] border border-border bg-card p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[12px] font-medium text-text-secondary">
+              Upcoming deadlines
+            </p>
+            <Link
+              href="/deadlines"
+              className="text-[12px] font-medium text-accent"
+            >
+              View all
+            </Link>
+          </div>
+
+          {upcomingDeadlines.length === 0 ? (
+            <p className="mt-3 text-[13px] text-text-secondary">
+              No open items with a due date.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {upcomingDeadlines.map((item) => {
+                const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
+                const overdue = dueDateUTC !== undefined && dueDateUTC < todayUTC;
+                return (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 text-[13px]"
                   >
-                    {item.dueDate?.toLocaleDateString(undefined, {
-                      timeZone: "UTC",
-                    })}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    <span className="text-text-primary">
+                      {item.description || "Untitled action item"}
+                    </span>
+                    <span
+                      className={
+                        overdue
+                          ? "font-medium text-danger"
+                          : "text-text-secondary"
+                      }
+                    >
+                      {item.dueDate?.toLocaleDateString(undefined, {
+                        timeZone: "UTC",
+                      })}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
     </main>
   );
