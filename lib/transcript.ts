@@ -11,6 +11,22 @@ export function extensionFromFilename(filename: string): string {
   return filename.split(".").pop()?.toLowerCase() ?? "";
 }
 
+// Falls back to this when the optional meeting title is left blank, on
+// either the paste-text or file-upload path (prd.md 6.1) — e.g.
+// "Meeting — Jul 25, 2026, 3:42 PM" — so entries stay distinguishable at a
+// glance instead of all reading "Untitled meeting".
+export function defaultTranscriptTitle(date: Date): string {
+  const formatted = date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+  return `Meeting — ${formatted}`;
+}
+
 // Strips VTT/SRT cue numbers and timestamp lines, keeping spoken text (with
 // speaker labels, if present) so Gemini extracts against clean transcript text.
 export function normalizeTranscript(

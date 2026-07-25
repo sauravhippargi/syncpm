@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import {
   ALLOWED_EXTENSIONS,
   MAX_TRANSCRIPT_BYTES,
+  defaultTranscriptTitle,
   isAllowedExtension,
   normalizeTranscript,
   type TranscriptFileType,
@@ -64,13 +65,15 @@ export async function POST(request: NextRequest) {
   }
 
   const normalized = normalizeTranscript(rawText, fileType);
+  const uploadedAt = new Date();
 
   try {
     const transcript = await prisma.transcript.create({
       data: {
         userId: session.user.id,
-        title: body.title?.trim() || null,
+        title: body.title?.trim() || defaultTranscriptTitle(uploadedAt),
         rawText: normalized,
+        uploadedAt,
       },
     });
     return NextResponse.json(
