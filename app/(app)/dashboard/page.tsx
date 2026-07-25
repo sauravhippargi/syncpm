@@ -22,7 +22,7 @@ export default async function DashboardPage() {
 
   const header = (
     <div className="flex flex-col gap-1">
-      <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+      <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
         Dashboard
       </h1>
       <p className="text-[13px] leading-[1.4] text-text-secondary">
@@ -90,16 +90,20 @@ export default async function DashboardPage() {
                 <li key={t.id}>
                   <Link
                     href={`/review/${t.id}`}
-                    className="group flex flex-col gap-1 py-3.5 first:pt-0 last:pb-0"
+                    className="group flex flex-col py-3 first:pt-0 last:pb-0"
                   >
-                    <span className="truncate text-[13px] font-medium text-text-primary group-hover:text-accent">
+                    <span className="mb-1.5 truncate text-[14.5px] font-semibold text-text-primary group-hover:text-accent">
                       {t.title || "Untitled meeting"}
                     </span>
-                    <span className="text-[11px] text-text-secondary">
-                      {t.actionItems.length} action item
-                      {t.actionItems.length === 1 ? "" : "s"} ·{" "}
-                      {blockerCount} blocker{blockerCount === 1 ? "" : "s"} ·{" "}
-                      {t.uploadedAt.toLocaleString()}
+                    <span className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">
+                      <span>
+                        {t.actionItems.length} action item
+                        {t.actionItems.length === 1 ? "" : "s"}
+                      </span>
+                      <span>
+                        {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
+                      </span>
+                      <span>{t.uploadedAt.toLocaleString()}</span>
                     </span>
                   </Link>
                 </li>
@@ -133,13 +137,13 @@ export default async function DashboardPage() {
                 return (
                   <li
                     key={item.id}
-                    className="flex items-start justify-between gap-3 py-3.5 text-[13px] first:pt-0 last:pb-0"
+                    className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                   >
-                    <span className="leading-[1.4] text-text-primary">
+                    <span className="text-[14.5px] font-semibold leading-[1.4] text-text-primary">
                       {item.description || "Untitled action item"}
                     </span>
                     <span
-                      className={`shrink-0 ${
+                      className={`shrink-0 text-[12.5px] ${
                         overdue ? "font-medium text-danger" : "text-text-secondary"
                       }`}
                     >
@@ -172,13 +176,24 @@ function StatTile({
       ? "text-warning"
       : tone === "success"
         ? "text-success"
-        : "text-text-primary";
+        : "text-accent";
+  const dotColor =
+    tone === "warning"
+      ? "bg-warning"
+      : tone === "success"
+        ? "bg-success"
+        : "bg-accent";
 
   return (
-    <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-      <p className="text-[12px] font-medium text-text-secondary">{label}</p>
-      <p className={`mt-1 text-[19px] font-semibold ${valueColor}`}>
+    <div className="rounded-[10px] border border-border bg-card px-5 pt-5 pb-[18px] shadow-card">
+      <p
+        className={`mb-1.5 text-[30px] font-bold leading-[1.1] tracking-[-0.02em] ${valueColor}`}
+      >
         {value}
+      </p>
+      <p className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
+        {label}
       </p>
     </div>
   );

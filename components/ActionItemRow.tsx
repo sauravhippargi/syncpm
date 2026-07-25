@@ -35,13 +35,13 @@ export default function ActionItemRow({
   const router = useRouter();
 
   return (
-    <li className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 shadow-card">
+    <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[14px] font-medium text-text-primary">
+        <div className="flex flex-col">
+          <span className="mb-1.5 text-[14.5px] font-semibold text-text-primary">
             {item.description || "Untitled action item"}
           </span>
-          <div className="flex flex-wrap items-center gap-2 text-[12px] text-text-secondary">
+          <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">
             <span className="rounded-[6px] bg-accent-tint px-2 py-1 font-medium text-accent">
               {item.owner || "Unassigned"}
             </span>

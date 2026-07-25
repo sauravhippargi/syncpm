@@ -46,7 +46,7 @@ export default function TranscriptTitle({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Untitled meeting"
           aria-label="Meeting title"
-          className="-mx-1 min-w-0 flex-1 rounded-[6px] border border-transparent px-1 text-[19px] font-semibold leading-[1.3] text-text-primary outline-none focus:border-border"
+          className="-mx-1 min-w-0 flex-1 rounded-[6px] border border-transparent px-1 text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary outline-none focus:border-border"
         />
         {dirty && (
           <button

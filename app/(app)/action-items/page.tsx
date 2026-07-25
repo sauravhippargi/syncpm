@@ -30,7 +30,7 @@ export default async function ActionItemsPage() {
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+        <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
           Action items
         </h1>
         <p className="text-[13px] leading-[1.4] text-text-secondary">
@@ -46,33 +46,35 @@ export default async function ActionItemsPage() {
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((item) => {
-            const latestSync = item.jiraSyncLogs[0];
-            return (
-              <ActionItemRow
-                key={item.id}
-                item={{
-                  id: item.id,
-                  description: item.description,
-                  owner: item.owner,
-                  dueDate: item.dueDate ? item.dueDate.toISOString() : null,
-                  blockerNote: item.blockerNote,
-                  transcriptId: item.transcriptId,
-                  transcriptTitle: item.transcript.title,
-                  jiraSync: latestSync
-                    ? {
-                        status: latestSync.status as "synced" | "failed",
-                        jiraIssueKey: latestSync.jiraIssueKey,
-                        jiraUrl: latestSync.jiraUrl,
-                      }
-                    : null,
-                }}
-                jiraConnection={connectionSummary}
-              />
-            );
-          })}
-        </ul>
+        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
+          <ul className="flex flex-col divide-y divide-row-divider">
+            {items.map((item) => {
+              const latestSync = item.jiraSyncLogs[0];
+              return (
+                <ActionItemRow
+                  key={item.id}
+                  item={{
+                    id: item.id,
+                    description: item.description,
+                    owner: item.owner,
+                    dueDate: item.dueDate ? item.dueDate.toISOString() : null,
+                    blockerNote: item.blockerNote,
+                    transcriptId: item.transcriptId,
+                    transcriptTitle: item.transcript.title,
+                    jiraSync: latestSync
+                      ? {
+                          status: latestSync.status as "synced" | "failed",
+                          jiraIssueKey: latestSync.jiraIssueKey,
+                          jiraUrl: latestSync.jiraUrl,
+                        }
+                      : null,
+                  }}
+                  jiraConnection={connectionSummary}
+                />
+              );
+            })}
+          </ul>
+        </div>
       )}
     </main>
   );

@@ -17,7 +17,7 @@ export default async function UploadPage() {
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+        <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
           Upload a transcript
         </h1>
         <p className="text-[13px] leading-[1.4] text-text-secondary">

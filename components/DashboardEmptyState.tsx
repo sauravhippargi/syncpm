@@ -27,7 +27,7 @@ export default function DashboardEmptyState({
   return (
     <div className="flex min-h-[60vh] flex-1 flex-col items-center justify-center gap-8 px-6 py-16 text-center">
       <div className="flex flex-col items-center gap-2">
-        <h2 className="text-[19px] font-semibold leading-[1.3] text-text-primary">
+        <h2 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
           Welcome to SyncPM
         </h2>
         <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
