@@ -69,7 +69,11 @@ export default async function ReviewPage({
       <ReviewScreen
         transcriptId={transcript.id}
         initialItems={items}
-        hasJiraConnection={!!jiraConnection}
+        jiraConnection={
+          jiraConnection
+            ? { siteName: jiraConnection.siteName, projectKey: jiraConnection.projectKey }
+            : null
+        }
       />
     </main>
   );

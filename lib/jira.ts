@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 
 const ATLASSIAN_AUTH_URL = "https://auth.atlassian.com";
@@ -50,6 +51,32 @@ function getOAuthAppConfig() {
     );
   }
   return { clientId, clientSecret };
+}
+
+// The `state` param round-trips through Atlassian's consent screen unchanged,
+// so it doubles as the transport for the actionItemId that started a connect
+// flow from inside RaiseATicketModal (architecture.md section 5, "OAuth
+// return context") — encoded alongside a CSRF token so the callback can still
+// verify the request came from the flow we started (the encoded string is
+// what's stored in the state cookie and compared for equality).
+export function encodeOAuthState(actionItemId?: string | null): string {
+  const payload = { csrf: randomUUID(), actionItemId: actionItemId ?? null };
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+export function decodeOAuthState(
+  state: string
+): { actionItemId: string | null } | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(state, "base64url").toString("utf8"));
+    if (typeof parsed?.csrf !== "string") return null;
+    return {
+      actionItemId:
+        typeof parsed.actionItemId === "string" ? parsed.actionItemId : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function buildAuthorizeUrl(redirectUri: string, state: string): string {
@@ -214,6 +241,46 @@ export async function listAccessibleProjects(
   return values.map((p) => ({ key: p.key, name: p.name }));
 }
 
+export interface AssignableUser {
+  accountId: string;
+  displayName: string;
+}
+
+// GET /rest/api/3/user/assignable/search returns a bare array (unlike
+// project/search, which wraps results in { values: [...] }).
+export async function getAssignableUsers(
+  userId: string,
+  projectKey: string
+): Promise<AssignableUser[]> {
+  const connection = await getValidConnection(userId);
+
+  const params = new URLSearchParams({ project: projectKey, maxResults: "50" });
+  const res = await fetch(
+    `${ATLASSIAN_API_URL}/ex/jira/${connection.cloudId}/rest/api/3/user/assignable/search?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${connection.accessToken}`,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new JiraRequestError(
+      "Failed to fetch assignable Jira users",
+      res.status,
+      body
+    );
+  }
+
+  const values = Array.isArray(body) ? body : [];
+  return values.map((u: { accountId: string; displayName: string }) => ({
+    accountId: u.accountId,
+    displayName: u.displayName,
+  }));
+}
+
 // Jira Cloud REST API v3 requires `description` to be Atlassian Document
 // Format - a nested doc/paragraph/text structure - not a plain string.
 // Sending a plain string here returns a 400 ("must be an ADF document").
@@ -254,6 +321,8 @@ export interface CreateIssueInput {
   blockerNote?: string | null;
   ownerName?: string | null;
   dueDate?: Date | null;
+  assigneeAccountId?: string | null;
+  priority?: string | null;
 }
 
 export interface CreateIssueResult {
@@ -261,9 +330,9 @@ export interface CreateIssueResult {
   url: string;
 }
 
-// Jira assigns issues by internal accountId, which can't be resolved from a
-// freeform extracted name - assignee is intentionally left unset, with the
-// owner's name kept visible in the description instead (PRD 6.4).
+// Assignee is set by accountId (Jira's internal identifier, resolved via
+// getAssignableUsers) and priority by name — chosen in RaiseATicketModal,
+// pre-filled but always overridable there (PRD 6.4).
 export async function createIssue(
   userId: string,
   input: CreateIssueInput
@@ -294,6 +363,14 @@ export async function createIssue(
 
   if (input.dueDate) {
     fields.duedate = input.dueDate.toISOString().slice(0, 10);
+  }
+
+  if (input.assigneeAccountId) {
+    fields.assignee = { accountId: input.assigneeAccountId };
+  }
+
+  if (input.priority) {
+    fields.priority = { name: input.priority };
   }
 
   let response: Response;

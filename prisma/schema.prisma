@@ -71,12 +71,14 @@ model ActionItem {
 }
 
 model JiraSyncLog {
-  id           String   @id @default(cuid())
-  actionItemId String   @map("action_item_id")
-  jiraIssueKey String?  @map("jira_issue_key")
-  jiraUrl      String?  @map("jira_url")
-  status       String // "synced" | "failed"
-  syncedAt     DateTime @default(now()) @map("synced_at")
+  id                String   @id @default(cuid())
+  actionItemId      String   @map("action_item_id")
+  jiraIssueKey      String?  @map("jira_issue_key")
+  jiraUrl           String?  @map("jira_url")
+  assigneeAccountId String?  @map("assignee_account_id")
+  priority          String?
+  status            String // "synced" | "failed"
+  syncedAt          DateTime @default(now()) @map("synced_at")
 
   actionItem ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
 

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { exchangeCodeForTokens, getAccessibleResources } from "@/lib/jira";
+import {
+  decodeOAuthState,
+  exchangeCodeForTokens,
+  getAccessibleResources,
+} from "@/lib/jira";
 
 const STATE_COOKIE = "jira_oauth_state";
 
@@ -60,7 +64,25 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const response = NextResponse.redirect(new URL("/raise-a-ticket", request.url));
+    // If connect was initiated from RaiseATicketModal, return to that same
+    // action item's Review & Edit screen with the modal reopened, rather
+    // than the standalone Raise a ticket tab (architecture.md section 5).
+    const actionItemId = decodeOAuthState(state)?.actionItemId ?? null;
+    const actionItem = actionItemId
+      ? await prisma.actionItem.findFirst({
+          where: { id: actionItemId, transcript: { userId: session.user.id } },
+          select: { transcriptId: true },
+        })
+      : null;
+
+    const successUrl = actionItem
+      ? new URL(
+          `/review/${actionItem.transcriptId}?openTicketModal=${actionItemId}`,
+          request.url
+        )
+      : new URL("/raise-a-ticket", request.url);
+
+    const response = NextResponse.redirect(successUrl);
     response.cookies.delete(STATE_COOKIE);
     return response;
   } catch (err) {

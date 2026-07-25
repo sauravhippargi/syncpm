@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import JiraSyncButton, { type JiraSyncState } from "./JiraSyncButton";
+import JiraSyncButton, {
+  type JiraConnectionSummary,
+  type JiraSyncState,
+} from "./JiraSyncButton";
 
 export interface ActionItem {
   id: string;
@@ -22,11 +25,11 @@ function toDateInputValue(iso: string | null): string {
 
 export default function ActionItemCard({
   item,
-  hasJiraConnection,
+  jiraConnection,
   onDeleted,
 }: {
   item: ActionItem;
-  hasJiraConnection: boolean;
+  jiraConnection: JiraConnectionSummary | null;
   onDeleted: () => void;
 }) {
   const [description, setDescription] = useState(item.description);
@@ -225,7 +228,9 @@ export default function ActionItemCard({
       <JiraSyncButton
         actionItemId={item.id}
         approved={baseline.isApproved}
-        hasJiraConnection={hasJiraConnection}
+        owner={baseline.owner}
+        isBlocker={baseline.isBlocker}
+        jiraConnection={jiraConnection}
         initialSync={item.jiraSync}
       />
     </div>

@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import ActionItemCard, { type ActionItem } from "./ActionItemCard";
+import type { JiraConnectionSummary } from "./JiraSyncButton";
 
 export default function ReviewScreen({
   transcriptId,
   initialItems,
-  hasJiraConnection,
+  jiraConnection,
 }: {
   transcriptId: string;
   initialItems: ActionItem[];
-  hasJiraConnection: boolean;
+  jiraConnection: JiraConnectionSummary | null;
 }) {
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   const [adding, setAdding] = useState(false);
@@ -54,7 +55,7 @@ export default function ReviewScreen({
         <ActionItemCard
           key={item.id}
           item={item}
-          hasJiraConnection={hasJiraConnection}
+          jiraConnection={jiraConnection}
           onDeleted={() => handleDelete(item.id)}
         />
       ))}

@@ -35,7 +35,11 @@ function ComingSoonCard({ slug, name, description }: ConnectorCardProps) {
   );
 }
 
-export default function ConnectorPicker() {
+export default function ConnectorPicker({
+  connectHref = "/api/integrations/jira/connect",
+}: {
+  connectHref?: string;
+}) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4">
@@ -52,7 +56,7 @@ export default function ConnectorPicker() {
           straight into a real project.
         </p>
         <a
-          href="/api/integrations/jira/connect"
+          href={connectHref}
           className="flex h-8 items-center self-start rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
         >
           Connect

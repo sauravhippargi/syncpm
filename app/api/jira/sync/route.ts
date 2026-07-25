@@ -10,6 +10,8 @@ import {
 
 interface SyncBody {
   actionItemId?: string;
+  assigneeAccountId?: string | null;
+  priority?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -62,6 +64,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const assigneeAccountId = body.assigneeAccountId || null;
+  const priority = body.priority || null;
+
   try {
     const { key, url } = await createIssue(session.user.id, {
       summary: actionItem.description,
@@ -70,6 +75,8 @@ export async function POST(request: NextRequest) {
       blockerNote: actionItem.isBlocker ? actionItem.blockerNote : null,
       ownerName: actionItem.owner,
       dueDate: actionItem.dueDate,
+      assigneeAccountId,
+      priority,
     });
 
     await prisma.jiraSyncLog.create({
@@ -77,6 +84,8 @@ export async function POST(request: NextRequest) {
         actionItemId: actionItem.id,
         jiraIssueKey: key,
         jiraUrl: url,
+        assigneeAccountId,
+        priority,
         status: "synced",
       },
     });
@@ -103,6 +112,8 @@ export async function POST(request: NextRequest) {
         actionItemId: actionItem.id,
         jiraIssueKey: null,
         jiraUrl: null,
+        assigneeAccountId,
+        priority,
         status: "failed",
       },
     });
