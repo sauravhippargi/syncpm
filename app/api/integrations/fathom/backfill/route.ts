@@ -70,7 +70,11 @@ export async function POST() {
         transcript = await prisma.transcript.create({
           data: {
             userId: connection.userId,
-            title: meeting.meetingTitle || meeting.title || null,
+            // `title` is Fathom's own displayed meeting name (matches its
+            // dashboard); `meeting_title` is just the linked calendar
+            // event's title, which is often a generic placeholder like
+            // "Impromptu Zoom Meeting" when there's no real calendar event.
+            title: meeting.title || meeting.meetingTitle || null,
             rawText,
             source: "fathom",
             fathomMeetingId: meeting.recordingId,
