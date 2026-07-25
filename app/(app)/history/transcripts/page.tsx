@@ -1,4 +1,20 @@
-export default function TranscriptHistoryPage() {
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+
+export default async function TranscriptHistoryPage() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/");
+  }
+
+  const transcripts = await prisma.transcript.findMany({
+    where: { userId: session.user.id },
+    include: { actionItems: true },
+    orderBy: { uploadedAt: "desc" },
+  });
+
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-1">
@@ -6,10 +22,61 @@ export default function TranscriptHistoryPage() {
           Transcript history
         </h1>
         <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Coming soon — this will list every transcript you&apos;ve uploaded,
-          with a link back into its Review screen.
+          Every meeting you&apos;ve uploaded, with its extracted action items
+          and blockers.
         </p>
       </div>
+
+      {transcripts.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+          <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
+            No transcripts yet — upload your first meeting to start
+            extracting action items, blockers, and tickets.
+          </p>
+          <Link
+            href="/upload"
+            className="flex h-8 items-center rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
+          >
+            Upload a transcript
+          </Link>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {transcripts.map((transcript) => {
+            const blockerCount = transcript.actionItems.filter(
+              (item) => item.isBlocker
+            ).length;
+            return (
+              <li key={transcript.id}>
+                <Link
+                  href={`/review/${transcript.id}`}
+                  className="flex items-center justify-between gap-4 rounded-[10px] border border-border bg-card p-4 transition-colors hover:border-accent"
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[14px] font-medium text-text-primary">
+                      {transcript.title || "Untitled meeting"}
+                    </span>
+                    <span className="text-[11px] text-text-secondary">
+                      Uploaded {transcript.uploadedAt.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 text-[12px] text-text-secondary">
+                    <span>
+                      {transcript.actionItems.length} action item
+                      {transcript.actionItems.length === 1 ? "" : "s"}
+                    </span>
+                    {blockerCount > 0 && (
+                      <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning">
+                        {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </main>
   );
 }
