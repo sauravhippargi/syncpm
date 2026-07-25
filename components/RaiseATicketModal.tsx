@@ -47,19 +47,22 @@ function findBestAssigneeMatch(
 export default function RaiseATicketModal({
   actionItemId,
   owner,
-  isBlocker,
+  blockerNote,
   jiraConnection,
   onClose,
   onCreated,
 }: {
   actionItemId: string;
   owner: string | null;
-  isBlocker: boolean;
+  blockerNote: string | null;
   jiraConnection: JiraConnectionSummary | null;
   onClose: () => void;
   onCreated: (result: { jiraIssueKey: string; jiraUrl: string }) => void;
 }) {
   const connected = !!jiraConnection;
+  // Non-empty blocker_note is the sole "this is a blocker" signal now — no
+  // separate boolean (architecture.md section 4).
+  const isBlocker = !!blockerNote?.trim();
 
   const [projects, setProjects] = useState<JiraProject[] | null>(null);
   const [projectsError, setProjectsError] = useState<string | null>(null);

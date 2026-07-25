@@ -6,7 +6,6 @@ interface UpdateActionItemBody {
   description?: string;
   owner?: string | null;
   dueDate?: string | null;
-  isBlocker?: boolean;
   blockerNote?: string | null;
   status?: string;
   isApproved?: boolean;
@@ -59,7 +58,6 @@ export async function PATCH(
   if (body.dueDate !== undefined) {
     data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   }
-  if (body.isBlocker !== undefined) data.isBlocker = body.isBlocker;
   if (body.blockerNote !== undefined) data.blockerNote = body.blockerNote;
   if (body.status !== undefined) data.status = body.status;
   if (body.isApproved !== undefined) data.isApproved = body.isApproved;

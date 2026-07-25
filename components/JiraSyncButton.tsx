@@ -15,18 +15,19 @@ export interface JiraConnectionSummary {
   projectKey: string | null;
 }
 
+// Lives in ActionItemRow (Action Items tab) now, not ActionItemCard — every
+// row it's rendered for is already approved, so there's no approval gating
+// here anymore (prd.md 6.3a).
 export default function JiraSyncButton({
   actionItemId,
-  approved,
   owner,
-  isBlocker,
+  blockerNote,
   jiraConnection,
   initialSync,
 }: {
   actionItemId: string;
-  approved: boolean;
   owner: string | null;
-  isBlocker: boolean;
+  blockerNote: string | null;
   jiraConnection: JiraConnectionSummary | null;
   initialSync: JiraSyncState | null;
 }) {
@@ -51,8 +52,6 @@ export default function JiraSyncButton({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  if (!approved) return null;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -87,7 +86,7 @@ export default function JiraSyncButton({
         <RaiseATicketModal
           actionItemId={actionItemId}
           owner={owner}
-          isBlocker={isBlocker}
+          blockerNote={blockerNote}
           jiraConnection={jiraConnection}
           onClose={() => setModalOpen(false)}
           onCreated={(result) => {

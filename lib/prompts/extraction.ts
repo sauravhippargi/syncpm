@@ -6,8 +6,7 @@ export interface ExtractedActionItem {
   description: string;
   owner: string | null;
   dueDate: string | null; // ISO 8601 date (YYYY-MM-DD)
-  isBlocker: boolean;
-  blockerNote: string | null;
+  blockerNote: string | null; // non-empty value is what makes this a blocker
 }
 
 // Gemini's `responseSchema` format (generationConfig.responseSchema), used
@@ -36,19 +35,14 @@ export const ACTION_ITEM_RESPONSE_SCHEMA = {
             description:
               "ISO 8601 date (YYYY-MM-DD) if a due date was stated or clearly implied. Null otherwise.",
           },
-          isBlocker: {
-            type: "BOOLEAN",
-            description:
-              'True if this item represents a blocker or dependency (language like "waiting on", "blocked by", "can\'t move until").',
-          },
           blockerNote: {
             type: "STRING",
             nullable: true,
             description:
-              "Short note describing what is blocking this item. Null if isBlocker is false.",
+              'Short note describing what is blocking this item, if this represents a blocker or dependency (language like "waiting on", "blocked by", "can\'t move until"). A non-empty value is what makes this item a blocker — null if it isn\'t one.',
           },
         },
-        required: ["description", "isBlocker"],
+        required: ["description"],
       },
     },
   },
@@ -70,8 +64,7 @@ For each concrete action item or task discussed, extract:
 - description: the task in plain language
 - owner: the person assigned, if named in the transcript (else null)
 - dueDate: an ISO date (YYYY-MM-DD) if a due date was mentioned or clearly implied (else null)
-- isBlocker: true if the item represents a blocker or dependency (language like "waiting on", "blocked by", "can't move until")
-- blockerNote: a short note describing the blocker (else null)
+- blockerNote: if the item represents a blocker or dependency (language like "waiting on", "blocked by", "can't move until"), a short note describing what's blocking it — otherwise null. A non-empty note is what makes this item a blocker; there is no separate flag.
 
 Only extract items with a concrete, actionable description. Skip vague discussion that didn't result in a task.
 
@@ -116,7 +109,6 @@ export function validateExtractionResult(
     if (typeof item.description !== "string" || !item.description.trim()) {
       return null;
     }
-    if (typeof item.isBlocker !== "boolean") return null;
 
     const owner = asNullableString(item.owner);
     if (owner === undefined) return null;
@@ -133,7 +125,6 @@ export function validateExtractionResult(
       description: item.description.trim(),
       owner,
       dueDate,
-      isBlocker: item.isBlocker,
       blockerNote,
     });
   }

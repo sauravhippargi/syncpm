@@ -65,21 +65,19 @@ export async function GET(request: NextRequest) {
     });
 
     // If connect was initiated from RaiseATicketModal, return to that same
-    // action item's Review & Edit screen with the modal reopened, rather
-    // than the standalone Raise a ticket tab (architecture.md section 5).
+    // action item's row on the Action Items tab with the modal reopened,
+    // rather than the standalone Raise a ticket tab (architecture.md section
+    // 5) — ticket creation lives there now, not on Review & Edit.
     const actionItemId = decodeOAuthState(state)?.actionItemId ?? null;
     const actionItem = actionItemId
       ? await prisma.actionItem.findFirst({
           where: { id: actionItemId, transcript: { userId: session.user.id } },
-          select: { transcriptId: true },
+          select: { id: true },
         })
       : null;
 
     const successUrl = actionItem
-      ? new URL(
-          `/review/${actionItem.transcriptId}?openTicketModal=${actionItemId}`,
-          request.url
-        )
+      ? new URL(`/action-items?openTicketModal=${actionItemId}`, request.url)
       : new URL("/raise-a-ticket", request.url);
 
     const response = NextResponse.redirect(successUrl);

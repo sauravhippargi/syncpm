@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import DeleteTranscriptButton from "@/components/DeleteTranscriptButton";
 import FathomBackfillButton from "@/components/FathomBackfillButton";
+import { isBlockerNote } from "@/lib/action-items";
 
 export default async function TranscriptHistoryPage() {
   const session = await auth();
@@ -51,8 +52,8 @@ export default async function TranscriptHistoryPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {transcripts.map((transcript) => {
-            const blockerCount = transcript.actionItems.filter(
-              (item) => item.isBlocker
+            const blockerCount = transcript.actionItems.filter((item) =>
+              isBlockerNote(item.blockerNote)
             ).length;
             return (
               <li

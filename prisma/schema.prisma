@@ -76,8 +76,7 @@ model ActionItem {
   owner        String?
   dueDate      DateTime? @map("due_date")
   status       String    @default("open") // "open" | "done"
-  isBlocker    Boolean   @default(false) @map("is_blocker")
-  blockerNote  String?   @map("blocker_note")
+  blockerNote  String?   @map("blocker_note") // non-empty value is what makes an item a blocker — no separate boolean
   isApproved   Boolean   @default(false) @map("is_approved")
 
   transcript   Transcript    @relation(fields: [transcriptId], references: [id], onDelete: Cascade)

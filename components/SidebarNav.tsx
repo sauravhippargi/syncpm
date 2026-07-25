@@ -6,6 +6,7 @@ import {
   CalendarClock,
   History,
   LayoutDashboard,
+  ListChecks,
   Ticket,
   Upload,
   type LucideIcon,
@@ -15,6 +16,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/upload", label: "Upload transcript", icon: Upload },
   { href: "/history/transcripts", label: "Transcript history", icon: History },
+  { href: "/action-items", label: "Action items", icon: ListChecks },
   { href: "/raise-a-ticket", label: "Raise a ticket", icon: Ticket },
   { href: "/deadlines", label: "Deadlines", icon: CalendarClock },
 ];

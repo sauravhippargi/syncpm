@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isBlockerNote } from "@/lib/action-items";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -34,7 +35,7 @@ export default async function DashboardPage() {
 
   const allItems = transcripts.flatMap((t) => t.actionItems);
   const openItems = allItems.filter((item) => item.status === "open");
-  const openBlockers = openItems.filter((item) => item.isBlocker);
+  const openBlockers = openItems.filter((item) => isBlockerNote(item.blockerNote));
   const syncedCount = allItems.reduce(
     (sum, item) =>
       sum + item.jiraSyncLogs.filter((log) => log.status === "synced").length,
@@ -82,8 +83,8 @@ export default async function DashboardPage() {
           </p>
           <ul className="mt-3 flex flex-col divide-y divide-border">
             {recentTranscripts.map((t) => {
-              const blockerCount = t.actionItems.filter(
-                (item) => item.isBlocker
+              const blockerCount = t.actionItems.filter((item) =>
+                isBlockerNote(item.blockerNote)
               ).length;
               return (
                 <li key={t.id}>

@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
         description: "",
         owner: null,
         dueDate: null,
-        isBlocker: false,
         blockerNote: null,
       },
     });
@@ -64,10 +63,8 @@ export async function POST(request: NextRequest) {
           owner: item.owner,
           dueDate: item.dueDate ? item.dueDate.toISOString() : null,
           status: item.status,
-          isBlocker: item.isBlocker,
           blockerNote: item.blockerNote,
           isApproved: item.isApproved,
-          jiraSync: null,
         },
       },
       { status: 201 }

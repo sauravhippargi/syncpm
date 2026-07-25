@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       summary: actionItem.description,
       descriptionText: actionItem.description,
       meetingTitle: actionItem.transcript.title || "Untitled meeting",
-      blockerNote: actionItem.isBlocker ? actionItem.blockerNote : null,
+      blockerNote: actionItem.blockerNote,
       ownerName: actionItem.owner,
       dueDate: actionItem.dueDate,
       assigneeAccountId,

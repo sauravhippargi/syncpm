@@ -8,6 +8,7 @@ const PROTECTED_PREFIXES = [
   "/upload",
   "/review",
   "/history",
+  "/action-items",
   "/deadlines",
   "/dashboard",
 ];

@@ -20,39 +20,21 @@ export default async function ReviewPage({
   const transcript = await prisma.transcript.findFirst({
     where: { id: transcriptId, userId: session.user.id },
     include: {
-      actionItems: {
-        orderBy: { id: "asc" },
-        include: { jiraSyncLogs: { orderBy: { syncedAt: "desc" }, take: 1 } },
-      },
+      actionItems: { orderBy: { id: "asc" } },
     },
   });
 
   if (!transcript) notFound();
 
-  const jiraConnection = await prisma.jiraConnection.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  const items: ActionItem[] = transcript.actionItems.map((item) => {
-    const latestSync = item.jiraSyncLogs[0];
-    return {
-      id: item.id,
-      description: item.description,
-      owner: item.owner,
-      dueDate: item.dueDate ? item.dueDate.toISOString() : null,
-      status: item.status,
-      isBlocker: item.isBlocker,
-      blockerNote: item.blockerNote,
-      isApproved: item.isApproved,
-      jiraSync: latestSync
-        ? {
-            status: latestSync.status as "synced" | "failed",
-            jiraIssueKey: latestSync.jiraIssueKey,
-            jiraUrl: latestSync.jiraUrl,
-          }
-        : null,
-    };
-  });
+  const items: ActionItem[] = transcript.actionItems.map((item) => ({
+    id: item.id,
+    description: item.description,
+    owner: item.owner,
+    dueDate: item.dueDate ? item.dueDate.toISOString() : null,
+    status: item.status,
+    blockerNote: item.blockerNote,
+    isApproved: item.isApproved,
+  }));
 
   return (
     <main className="mx-auto flex w-full max-w-[960px] flex-1 flex-col gap-6 px-6 py-10">
@@ -61,19 +43,11 @@ export default async function ReviewPage({
           transcriptId={transcript.id}
           initialTitle={transcript.title ?? ""}
         />
-        <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Uploaded {transcript.uploadedAt.toLocaleString()} — review, edit, or add action items
-          below.
-        </p>
       </div>
       <ReviewScreen
         transcriptId={transcript.id}
+        uploadedAt={transcript.uploadedAt.toLocaleString()}
         initialItems={items}
-        jiraConnection={
-          jiraConnection
-            ? { siteName: jiraConnection.siteName, projectKey: jiraConnection.projectKey }
-            : null
-        }
       />
     </main>
   );

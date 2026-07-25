@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isBlockerNote } from "@/lib/action-items";
 
 export default async function DeadlinesPage() {
   const session = await auth();
@@ -79,7 +80,7 @@ export default async function DeadlinesPage() {
                   <span className="rounded-[6px] bg-accent-tint px-2 py-1 font-medium text-accent">
                     {item.owner || "Unassigned"}
                   </span>
-                  {item.isBlocker && (
+                  {isBlockerNote(item.blockerNote) && (
                     <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning">
                       Blocker
                     </span>
