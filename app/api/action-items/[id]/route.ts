@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 interface UpdateActionItemBody {
@@ -10,11 +11,36 @@ interface UpdateActionItemBody {
   status?: string;
 }
 
+// action_items have no userId of their own — ownership is inherited through
+// their parent transcript (architecture.md section 4), so every read/write
+// here must join through transcript.userId to confirm the caller owns it.
+async function findOwnedActionItem(id: string, userId: string) {
+  return prisma.actionItem.findFirst({
+    where: { id, transcript: { userId } },
+  });
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
   const { id } = await params;
+
+  const existing = await findOwnedActionItem(id, session.user.id);
+  if (!existing) {
+    return NextResponse.json(
+      { error: "Action item not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
 
   let body: UpdateActionItemBody;
   try {
@@ -52,7 +78,23 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
   const { id } = await params;
+
+  const existing = await findOwnedActionItem(id, session.user.id);
+  if (!existing) {
+    return NextResponse.json(
+      { error: "Action item not found", code: "NOT_FOUND" },
+      { status: 404 }
+    );
+  }
 
   try {
     await prisma.actionItem.delete({ where: { id } });

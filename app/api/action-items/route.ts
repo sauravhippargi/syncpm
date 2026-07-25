@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 interface CreateActionItemBody {
@@ -9,6 +10,14 @@ interface CreateActionItemBody {
 // a blank item the PM fills in, or the fallback path when Gemini extraction
 // fails validation (rules.md: let the user manually add items instead).
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
   let body: CreateActionItemBody;
   try {
     body = await request.json();
@@ -23,6 +32,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "transcriptId is required", code: "MISSING_TRANSCRIPT_ID" },
       { status: 400 }
+    );
+  }
+
+  const transcript = await prisma.transcript.findFirst({
+    where: { id: body.transcriptId, userId: session.user.id },
+  });
+  if (!transcript) {
+    return NextResponse.json(
+      { error: "Transcript not found", code: "NOT_FOUND" },
+      { status: 404 }
     );
   }
 

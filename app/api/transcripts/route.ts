@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   ALLOWED_EXTENSIONS,
@@ -15,6 +16,14 @@ interface CreateTranscriptBody {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
   let body: CreateTranscriptBody;
   try {
     body = await request.json();
@@ -59,6 +68,7 @@ export async function POST(request: NextRequest) {
   try {
     const transcript = await prisma.transcript.create({
       data: {
+        userId: session.user.id,
         title: body.title?.trim() || null,
         rawText: normalized,
       },

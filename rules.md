@@ -9,12 +9,13 @@
 - Supabase Postgres as the only database — no local SQLite, no mixing databases
 - Google Gemini API as the only LLM provider — no fallback to OpenAI/Anthropic/Groq unless this doc is updated
 - Jira Cloud REST API v3 with Basic Auth (API token) — no OAuth 2.0 in v1
+- Auth.js (NextAuth v5), Credentials provider, JWT session strategy — the only auth library
 - Vercel for hosting — no other deploy targets
 
 ### Avoid
 - No paid APIs or services of any kind — every external call must be verifiably free-tier
 - No state management libraries (Redux, Zustand, etc.) — React state + Server Components/URL state is enough for this app's scope
-- No auth libraries (Clerk, NextAuth, etc.) — this is single-user, no login screen in v1
+- No auth providers other than Auth.js Credentials — no Clerk, no Auth0, no custom-rolled session/cookie handling, no OAuth social login in v1
 - No browser storage (`localStorage`/`sessionStorage`) — all persistence goes through Postgres
 - No unnecessary abstraction layers (repository pattern, DI frameworks, etc.) — keep it direct and readable; this needs to be walked through in an interview, not maintained by a large team
 
@@ -24,13 +25,17 @@
 - **Gemini output validation** — always validate returned JSON against the expected schema before saving; if it doesn't match, don't silently coerce it — show the raw output and let the user manually add action items instead
 - **Jira sync** — every attempt (success or failure) is logged in `jira_sync_log`; failures should surface the actual Jira error message in the UI, not a generic "something went wrong"
 - **File upload** — validate file type (`.txt`, `.vtt`, `.srt`) and cap size (e.g. 2MB) before accepting a transcript
+- **Sign in failures** — return a generic "Invalid email or password" for both a wrong email and a wrong password; never reveal which one was incorrect
+- **Sign up failures** — if the email is already registered, say so plainly ("An account with this email already exists") rather than a generic error
 - Every API route returns a consistent error shape: `{ error: string, code?: string }` — never throw raw exceptions to the client
 
 ## 3. Security & Secrets
 
-- Jira API token and Gemini API key live only in server-side environment variables — never exposed in client-side code
+- Jira API token, Gemini API key, and `AUTH_SECRET` live only in server-side environment variables — never exposed in client-side code
 - `.env` is gitignored; `.env.example` ships with placeholder keys and comments
 - No secrets, tokens, or credentials ever hard-coded, even temporarily "just to test"
+- Passwords are always hashed with bcrypt before being stored — never stored, logged, or returned in plain text, even in error messages
+- Every route that reads or writes `transcripts`, `action_items`, or `jira_sync_log` must filter by the signed-in user's `user_id` — no exceptions, no "admin" bypass
 
 ## 4. AI/LLM Usage Boundaries
 

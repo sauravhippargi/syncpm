@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import ReviewScreen from "@/components/ReviewScreen";
 import type { ActionItem } from "@/components/ActionItemCard";
@@ -10,8 +11,13 @@ export default async function ReviewPage({
 }) {
   const { transcriptId } = await params;
 
-  const transcript = await prisma.transcript.findUnique({
-    where: { id: transcriptId },
+  // proxy.ts already redirects unauthenticated requests for /review, but data
+  // access must never rely on that alone (rules.md section 3) — check again here.
+  const session = await auth();
+  if (!session?.user?.id) notFound();
+
+  const transcript = await prisma.transcript.findFirst({
+    where: { id: transcriptId, userId: session.user.id },
     include: { actionItems: { orderBy: { id: "asc" } } },
   });
 

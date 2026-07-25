@@ -7,23 +7,31 @@ SyncPM is an AI-powered tool for Program Managers that turns cross-functional me
 PMs run many cross-functional meetings. Action items get buried in notes, owners aren't always clear, blockers surface verbally but never get tracked, and manually creating Jira tickets, sending follow-ups, and compiling a weekly status report eats hours every week.
 
 ## 3. Target User
-- **Primary (v1):** A single Program Manager (you) — also the intended demo user for interviews.
-- **Secondary audience:** Interviewers/hiring managers evaluating your ability to build a real, working AI-powered tool with genuine API integrations — not just a UI mockup.
-- Not built for team-wide or multi-tenant use in v1.
+- **Primary (v1):** Any Program Manager who creates an account — each user's transcripts, action items, and history are private to them.
+- **Secondary audience:** Interviewers/hiring managers evaluating your ability to build a real, working AI-powered tool with genuine API integrations — they can sign up with their own account and try it live, not just look at a mockup.
+- Jira remains a single shared demo workspace (env-configured, e.g. "Acme Tech") — all accounts sync into the same Jira project in v1. Per-user Jira credentials are a possible future enhancement, not required now.
 
 ## 4. Goals (v1)
 - Demonstrate a full AI pipeline: raw transcript → structured, useful output
 - Demonstrate a genuine third-party API integration (Jira Cloud REST API) — not mocked
 - Show a thoughtful human-in-the-loop UX: nothing gets created or sent without review
+- Support real, secure multi-user accounts — each PM's data is private to their account
 - (Secondary) Actually save time on your own PM workflow
 
 ## 5. Non-Goals (v1)
 - No live Zoom/Google Meet integration — transcripts are uploaded manually
 - No live Slack API integration — v1 only *drafts* the message; sending is manual copy/paste
-- No multi-user accounts, auth, or permissions
-- No paid APIs — AI extraction runs on a free-tier cloud LLM (Gemini or Groq, finalized in `architecture.md`)
+- No per-user Jira credentials — all accounts share one env-configured Jira workspace
+- No password reset or email verification flow — can be added later if the tool grows beyond a portfolio demo
+- No paid APIs — AI extraction runs on a free-tier cloud LLM (Gemini), auth uses a free, self-hosted library (no Clerk/Auth0)
 
 ## 6. Core Features
+
+### 6.0 Authentication & Accounts
+- Combined landing + sign in/sign up page at the root route
+- Email + password accounts (hashed, never stored in plain text)
+- Every other feature below requires being signed in — unauthenticated visitors are redirected here
+- Each user's transcripts, action items, and history are private to their account
 
 ### 6.1 Transcript Ingestion
 - Manual upload of a meeting transcript file (`.txt`, `.vtt`, `.srt`)
@@ -75,9 +83,10 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 - **Functional:** Time saved vs. manual note-taking + ticket creation + follow-ups
 - **Quality:** % of meetings where action items are accurately captured and owners correctly assigned
 
-## 8. Open Questions (to resolve in later docs)
-- Jira auth: API token + Basic Auth (simpler) vs. OAuth 2.0 (more impressive to walk through in an interview) — decide in `architecture.md`
-- Gemini vs. Groq for the free-tier LLM — decide in `architecture.md`
-- Whether live Slack sending becomes a "Phase 2" feature (`phases.md`)
+## 8. Open Questions
 - How due dates get inferred when not explicitly stated in the transcript
 - Fallback behavior when owner matching fails (nicknames, unclear pronouns, etc.)
+- Whether per-user Jira credentials become a future feature (currently: one shared workspace for all accounts)
+- Whether password reset/email verification gets added later, or stays out of scope permanently
+
+**Resolved:** Jira uses API token + Basic Auth · LLM is Gemini · Auth uses Auth.js (Credentials provider), not Clerk/Auth0

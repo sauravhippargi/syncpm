@@ -10,13 +10,17 @@
 | ORM | Prisma | Type-safe queries, simple migrations, easy to explain in an interview |
 | LLM (extraction) | Google Gemini API (`gemini-2.5-flash` or `flash-lite`) | Free tier, ~1,500 requests/day, 1M tokens/minute — comfortably handles full transcripts; native structured JSON output reduces parsing failures |
 | Jira integration | Jira Cloud REST API v3 | Real third-party API; authenticated via API token + Basic Auth |
+| Auth | Auth.js (NextAuth v5), Credentials provider | Free, self-hosted — no Clerk/Auth0 account needed; JWT session strategy with a manual Prisma lookup in `authorize()`, so no extra Account/Session tables are required |
 | Hosting | Vercel (Hobby/free tier) | Zero-cost hosting for a personal-use Next.js app; interviewers can click into a live URL |
 
 ## 2. App Flow
 
 ```mermaid
 flowchart TD
-    A[User uploads transcript] --> B[(Stored in Postgres: transcripts table)]
+    Z[Sign in / sign up] --> Z2{Authenticated?}
+    Z2 -->|No| Z
+    Z2 -->|Yes| A[User uploads transcript]
+    A --> B[(Stored in Postgres: transcripts table, owned by userId)]
     B --> C[API route sends transcript to Gemini]
     C --> D[Gemini returns structured JSON:\naction items, owners, blockers]
     D --> E[(Stored: action_items table)]
@@ -34,7 +38,8 @@ flowchart TD
 ```
 
 **Walkthrough:**
-1. User uploads a transcript (paste text or `.txt`/`.vtt`/`.srt` file) → stored as-is in the `transcripts` table.
+0. Visitor lands on the combined landing/login page. `proxy.ts` redirects any unauthenticated request for `/upload`, `/review`, `/history`, `/deadlines`, or `/dashboard` back here (Next.js 16 renamed the `middleware.ts` file convention to `proxy.ts` — same mechanism, new name).
+1. Once signed in, the user uploads a transcript (paste text or `.txt`/`.vtt`/`.srt` file) → stored in the `transcripts` table, tagged with their `userId`.
 2. An API route sends the transcript to Gemini with a prompt requesting structured JSON output (action items, assigned owners, blockers).
 3. The parsed result is stored in the `action_items` table, linked to the source transcript.
 4. The Review & Edit screen shows everything for the user to correct before anything goes further.
@@ -47,8 +52,9 @@ flowchart TD
 
 ```
 syncpm/
+├── proxy.ts                           # Redirects unauthenticated requests to / (Next 16 renamed middleware.ts -> proxy.ts)
 ├── app/
-│   ├── page.tsx                       # Landing/home
+│   ├── page.tsx                       # Combined landing + sign in/sign up page
 │   ├── upload/
 │   │   └── page.tsx                   # Transcript upload screen
 │   ├── review/[transcriptId]/
@@ -61,12 +67,14 @@ syncpm/
 │   ├── dashboard/
 │   │   └── page.tsx                   # Weekly status dashboard
 │   └── api/
+│       ├── auth/[...nextauth]/route.ts # Auth.js sign in/sign up handlers
 │       ├── transcripts/route.ts       # Handles upload + storage
 │       ├── extract/route.ts           # Calls Gemini, parses response
 │       ├── jira/sync/route.ts         # Calls Jira REST API
 │       └── slack/draft/route.ts       # Generates Slack message draft
 ├── lib/
 │   ├── db.ts                          # Prisma client instance
+│   ├── auth.ts                        # Auth.js config (Credentials provider, JWT)
 │   ├── gemini.ts                      # Gemini API wrapper
 │   ├── jira.ts                        # Jira API client (Basic Auth)
 │   └── prompts/
@@ -89,9 +97,12 @@ syncpm/
 
 ## 4. Data Model (high-level)
 
-- **transcripts** — `id`, `title`, `uploaded_at`, `raw_text`
+- **users** — `id`, `email` (unique), `hashed_password`, `created_at`
+- **transcripts** — `id`, `user_id` (FK, owner), `title`, `uploaded_at`, `raw_text`
 - **action_items** — `id`, `transcript_id` (FK), `description`, `owner`, `due_date`, `status` (open/done), `is_blocker`, `blocker_note`
 - **jira_sync_log** — `id`, `action_item_id` (FK), `jira_issue_key`, `jira_url`, `status` (synced/failed), `synced_at`
+
+Ownership is scoped at the `transcripts` level only — `action_items` and `jira_sync_log` inherit ownership through their parent transcript, so every query for a user's data filters `transcripts` by `user_id` first, then joins down.
 
 ## 5. Key Technical Considerations
 
@@ -99,3 +110,6 @@ syncpm/
 - **Gemini free tier** is generous for single-user use, but code defensively for `429` responses with exponential backoff.
 - **Jira credentials** (account email + API token) live only in Vercel environment variables — never in client-side code or committed to the repo.
 - **No secrets in git** — ship a `.env.example` with placeholder keys; the real `.env` is gitignored.
+- **Passwords** are hashed with bcrypt before storage — never stored or logged in plain text.
+- **`AUTH_SECRET`** (required by Auth.js) lives in environment variables like every other secret — generate once, set in `.env` and all three Vercel environments.
+- **Every data-fetching query** must filter by the signed-in user's `user_id` — there is no "admin" or cross-user view in v1, so a missed filter is a real data leak between accounts, not just a display bug.

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { extractActionItems, GeminiRequestError, GeminiValidationError } from "@/lib/gemini";
 
@@ -11,6 +12,14 @@ interface ExtractBody {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Not signed in", code: "UNAUTHENTICATED" },
+      { status: 401 }
+    );
+  }
+
   let body: ExtractBody;
   try {
     body = await request.json();
@@ -29,7 +38,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const transcript = await prisma.transcript.findUnique({ where: { id: transcriptId } });
+  const transcript = await prisma.transcript.findFirst({
+    where: { id: transcriptId, userId: session.user.id },
+  });
   if (!transcript) {
     return NextResponse.json(
       { error: "Transcript not found", code: "NOT_FOUND" },

@@ -11,12 +11,25 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  hashedPassword String   @map("hashed_password")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  transcripts Transcript[]
+
+  @@map("users")
+}
+
 model Transcript {
   id         String   @id @default(cuid())
+  userId     String   @map("user_id")
   title      String?
   uploadedAt DateTime @default(now()) @map("uploaded_at")
   rawText    String   @map("raw_text")
 
+  user        User         @relation(fields: [userId], references: [id])
   actionItems ActionItem[]
 
   @@map("transcripts")
