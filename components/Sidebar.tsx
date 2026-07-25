@@ -12,7 +12,7 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
 
       <SidebarNav />
 
-      <div className="mt-6 flex flex-col gap-2 border-t border-border pt-4">
+      <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
         <p className="truncate px-2 text-[12px] text-text-secondary">
           {userEmail}
         </p>
