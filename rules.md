@@ -54,7 +54,8 @@
 - Don't restructure the folder layout defined in `architecture.md` without discussing it first
 - If a task is ambiguous or underspecified, leave a clear `// TODO:` comment and flag it — don't silently guess and ship a stub
 - Match the file/folder structure and naming already defined in `architecture.md`
-- The connector picker (Jira/Asana/Linear) should not stub out fake Asana/Linear API logic — those two are visual placeholders only ("Coming soon," disabled), not partially-implemented integrations
+- The connector picker (Jira/Asana/Linear) and the Upload screen's source placeholders (Zoom/Otter.ai/Google Meet) should not stub out fake API logic for the non-functional ones — anything marked "Coming soon" is a visual placeholder only, not a partially-implemented integration
+- Use a permissively-licensed icon set (e.g. `simple-icons`) for real third-party logos (Jira, Asana, Linear, Zoom, Google Meet, etc.) rather than hand-approximating brand marks — check whether a given brand is available in the chosen set before assuming it is
 
 ## 6. Testing (assumption — flag if you want this changed)
 - No full automated test suite required for v1, given this is a portfolio project on a tight build timeline

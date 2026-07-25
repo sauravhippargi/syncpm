@@ -1,4 +1,5 @@
 import TranscriptUploader from "@/components/TranscriptUploader";
+import SourceConnectorRow from "@/components/SourceConnectorRow";
 
 export default function UploadPage() {
   return (
@@ -11,6 +12,7 @@ export default function UploadPage() {
           Paste a transcript or upload a .txt/.vtt/.srt file to extract action items, owners, and blockers.
         </p>
       </div>
+      <SourceConnectorRow />
       <TranscriptUploader />
     </main>
   );

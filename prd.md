@@ -19,7 +19,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 - (Secondary) Actually save time on your own PM workflow
 
 ## 5. Non-Goals (v1)
-- No live Zoom/Google Meet integration — transcripts are uploaded manually
+- No live Zoom/Google Meet/Otter.ai integration — transcripts are uploaded manually; these appear only as visual "Coming soon" placeholders on the Upload screen
 - No live Slack API integration — v1 only *drafts* the message; sending is manual copy/paste
 - No Asana or Linear functionality — shown in the connector picker as "Coming soon" placeholders to signal the extensible design, but not functional
 - No support for connecting more than one Jira site per user in v1
@@ -37,6 +37,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 ### 6.1 Transcript Ingestion
 - Manual upload of a meeting transcript file (`.txt`, `.vtt`, `.srt`)
 - Basic normalization: clean up speaker labels, strip unneeded timestamp noise, prep text for the AI pass
+- Placeholder connectors (Zoom, Otter.ai, Google Meet) shown above the manual upload area with their real logos — visual only, clicking shows a "Coming soon" message, matching the Asana/Linear pattern already used in Raise a Ticket
 
 ### 6.2 AI Extraction Engine
 - **Action item extraction** — pulls concrete tasks discussed in the meeting

@@ -1,15 +1,18 @@
+import BrandIcon from "./BrandIcon";
+import type { BrandIconSlug } from "@/lib/brand-icons";
+
 interface ConnectorCardProps {
-  letter: string;
+  slug: BrandIconSlug;
   name: string;
   description: string;
 }
 
-function ComingSoonCard({ letter, name, description }: ConnectorCardProps) {
+function ComingSoonCard({ slug, name, description }: ConnectorCardProps) {
   return (
     <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4 opacity-60">
       <div className="flex items-center gap-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-page text-[12px] font-semibold text-text-secondary">
-          {letter}
+        <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-page">
+          <BrandIcon slug={slug} className="h-4 w-4" />
         </span>
         <span className="text-[14px] font-medium text-text-primary">
           {name}
@@ -37,8 +40,8 @@ export default function ConnectorPicker() {
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-card p-4">
         <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-accent text-[12px] font-semibold text-white">
-            J
+          <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-accent-tint">
+            <BrandIcon slug="jira" className="h-4 w-4" />
           </span>
           <span className="text-[14px] font-medium text-text-primary">
             Jira
@@ -57,12 +60,12 @@ export default function ConnectorPicker() {
       </div>
 
       <ComingSoonCard
-        letter="A"
+        slug="asana"
         name="Asana"
         description="Sync action items into Asana tasks."
       />
       <ComingSoonCard
-        letter="L"
+        slug="linear"
         name="Linear"
         description="Sync action items into Linear issues."
       />

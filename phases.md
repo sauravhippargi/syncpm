@@ -20,6 +20,7 @@ Goal: prove the core AI pipeline works end to end.
 - Gemini extraction call: action items, owners, blockers, returned as structured JSON
 - Extracted items stored in `action_items` table
 - Basic Review & Edit screen (view/edit/delete extracted items — no downstream actions yet)
+- *(Added later)* Placeholder connectors (Zoom, Otter.ai, Google Meet) with real logos above the manual upload area — visual only, "Coming soon" on click
 
 ## Phase 2 — Authentication & Multi-user Accounts
 Goal: turn this from a single-user tool into one where any PM can sign up and keep their own private data.
@@ -45,6 +46,7 @@ Goal: prove the real third-party integration works — and make it a genuine per
 - "Sync to Jira" button on approved action items, routing to this tab first if not yet connected
 - Real issue creation via Jira REST API v3, called through `api.atlassian.com` with the user's own token
 - `jira_sync_log` populated with result (synced/failed + issue link)
+- *(Added later)* Real Jira/Asana/Linear logos (via `simple-icons`) replacing flat placeholder blocks in the connector picker
 
 ## Phase 4 — History & Tracking Views
 Goal: build out the remaining full-list views the Dashboard's previews link out to.

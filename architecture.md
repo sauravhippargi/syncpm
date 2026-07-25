@@ -12,6 +12,7 @@
 | Jira integration | Jira Cloud REST API v3, via OAuth 2.0 (3LO) | Each user connects their own Jira site — no shared credentials. Access tokens call through `api.atlassian.com/ex/jira/{cloudId}/...`, refreshed automatically when expired |
 | Auth | Auth.js (NextAuth v5), Credentials provider | Free, self-hosted — no Clerk/Auth0 account needed; JWT session strategy with a manual Prisma lookup in `authorize()`, so no extra Account/Session tables are required |
 | Hosting | Vercel (Hobby/free tier) | Zero-cost hosting for a personal-use Next.js app; interviewers can click into a live URL |
+| Icons | `simple-icons` (or equivalent permissively-licensed set) | Real, recognizable brand marks for Jira/Asana/Linear/Zoom/Google Meet in connector UIs — not hand-drawn approximations |
 
 ## 2. App Flow
 
@@ -97,6 +98,7 @@ syncpm/
 │   ├── TranscriptUploader.tsx
 │   ├── JiraSyncButton.tsx
 │   ├── ConnectorPicker.tsx            # Jira/Asana/Linear cards, Connect buttons, "Coming soon" states
+│   ├── SourceConnectorRow.tsx         # Zoom/Otter.ai/Google Meet placeholders above the manual upload area, "Coming soon" on click
 │   └── SlackDraftCard.tsx
 ├── prisma/
 │   └── schema.prisma
