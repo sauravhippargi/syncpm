@@ -1,9 +1,18 @@
+import { prisma } from "@/lib/db";
+
+const ATLASSIAN_AUTH_URL = "https://auth.atlassian.com";
+const ATLASSIAN_API_URL = "https://api.atlassian.com";
 const JIRA_ISSUE_TYPE = "Task";
 
-// Thrown on any failure to create a Jira issue - request error, auth error,
-// or a validation error from Jira itself. Carries the raw Jira response so
-// the caller can surface the actual error message per rules.md section 2
-// ("failures should surface the actual Jira error message in the UI").
+// Classic Jira OAuth 2.0 (3LO) scopes — offline_access is required to get a
+// refresh_token back at all, otherwise Atlassian only issues a short-lived
+// access_token with no way to renew it.
+export const JIRA_OAUTH_SCOPES =
+  "read:jira-work write:jira-work read:jira-user offline_access";
+
+// Thrown on any failure to create a Jira issue or call the Jira API - carries
+// the raw response so the caller can surface the actual error message per
+// rules.md section 2 ("failures should surface the actual Jira error message").
 export class JiraRequestError extends Error {
   status?: number;
   jiraResponse?: unknown;
@@ -15,35 +24,194 @@ export class JiraRequestError extends Error {
   }
 }
 
-interface JiraConfig {
-  baseUrl: string;
-  email: string;
-  apiToken: string;
-  projectKey: string;
+// Thrown when the signed-in user has no jira_connections row yet.
+export class JiraNotConnectedError extends Error {
+  constructor() {
+    super("Jira is not connected for this account");
+  }
 }
 
-function getJiraConfig(): JiraConfig {
-  const baseUrl = process.env.JIRA_BASE_URL;
-  const email = process.env.JIRA_EMAIL;
-  const apiToken = process.env.JIRA_API_TOKEN;
-  const projectKey = process.env.JIRA_PROJECT_KEY;
+// Thrown when the stored refresh token was rejected (e.g. the user revoked
+// access from Atlassian's side). The connection row is deleted as part of
+// throwing this - rules.md section 2: "delete the jira_connections row and
+// show a clear 'Your Jira connection expired — reconnect' message".
+export class JiraConnectionExpiredError extends Error {
+  constructor() {
+    super("Your Jira connection expired — reconnect");
+  }
+}
 
-  if (!baseUrl || !email || !apiToken || !projectKey) {
+function getOAuthAppConfig() {
+  const clientId = process.env.JIRA_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.JIRA_OAUTH_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
     throw new JiraRequestError(
-      "Jira is not configured — missing JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, or JIRA_PROJECT_KEY"
+      "Jira OAuth is not configured — missing JIRA_OAUTH_CLIENT_ID or JIRA_OAUTH_CLIENT_SECRET"
+    );
+  }
+  return { clientId, clientSecret };
+}
+
+export function buildAuthorizeUrl(redirectUri: string, state: string): string {
+  const { clientId } = getOAuthAppConfig();
+  const params = new URLSearchParams({
+    audience: "api.atlassian.com",
+    client_id: clientId,
+    scope: JIRA_OAUTH_SCOPES,
+    redirect_uri: redirectUri,
+    state,
+    response_type: "code",
+    prompt: "consent",
+  });
+  return `${ATLASSIAN_AUTH_URL}/authorize?${params.toString()}`;
+}
+
+interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}
+
+export async function exchangeCodeForTokens(
+  code: string,
+  redirectUri: string
+): Promise<TokenResponse> {
+  const { clientId, clientSecret } = getOAuthAppConfig();
+
+  const res = await fetch(`${ATLASSIAN_AUTH_URL}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "authorization_code",
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: redirectUri,
+    }),
+  });
+
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new JiraRequestError(
+      `Failed to exchange Jira authorization code: ${JSON.stringify(body)}`,
+      res.status,
+      body
+    );
+  }
+  return body as TokenResponse;
+}
+
+export interface AccessibleResource {
+  id: string; // cloudId
+  url: string;
+  name: string;
+}
+
+export async function getAccessibleResources(
+  accessToken: string
+): Promise<AccessibleResource[]> {
+  const res = await fetch(`${ATLASSIAN_API_URL}/oauth/token/accessible-resources`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new JiraRequestError(
+      "Failed to fetch accessible Jira sites",
+      res.status,
+      body
+    );
+  }
+  return body as AccessibleResource[];
+}
+
+async function refreshAccessToken(userId: string, refreshToken: string) {
+  const { clientId, clientSecret } = getOAuthAppConfig();
+
+  const res = await fetch(`${ATLASSIAN_AUTH_URL}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!res.ok) {
+    // The refresh token was rejected - the connection is no longer usable.
+    await prisma.jiraConnection.deleteMany({ where: { userId } });
+    throw new JiraConnectionExpiredError();
+  }
+
+  const body = (await res.json()) as TokenResponse;
+
+  // Atlassian rotates the refresh token on every use - the old one is
+  // invalidated, so it must be overwritten, never reused (architecture.md
+  // section 5).
+  return prisma.jiraConnection.update({
+    where: { userId },
+    data: {
+      accessToken: body.access_token,
+      refreshToken: body.refresh_token,
+      expiresAt: new Date(Date.now() + body.expires_in * 1000),
+    },
+  });
+}
+
+// Refreshes 60s early so a token that's valid at lookup time doesn't expire
+// mid-request.
+const EXPIRY_BUFFER_MS = 60_000;
+
+async function getValidConnection(userId: string) {
+  const connection = await prisma.jiraConnection.findUnique({
+    where: { userId },
+  });
+  if (!connection) {
+    throw new JiraNotConnectedError();
+  }
+
+  if (connection.expiresAt.getTime() - EXPIRY_BUFFER_MS <= Date.now()) {
+    return refreshAccessToken(userId, connection.refreshToken);
+  }
+
+  return connection;
+}
+
+export interface JiraProject {
+  key: string;
+  name: string;
+}
+
+export async function listAccessibleProjects(
+  userId: string
+): Promise<JiraProject[]> {
+  const connection = await getValidConnection(userId);
+
+  const res = await fetch(
+    `${ATLASSIAN_API_URL}/ex/jira/${connection.cloudId}/rest/api/3/project/search`,
+    {
+      headers: {
+        Authorization: `Bearer ${connection.accessToken}`,
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new JiraRequestError(
+      "Failed to fetch Jira projects",
+      res.status,
+      body
     );
   }
 
-  return { baseUrl: baseUrl.replace(/\/$/, ""), email, apiToken, projectKey };
-}
-
-function authHeaders(email: string, apiToken: string): HeadersInit {
-  const token = Buffer.from(`${email}:${apiToken}`).toString("base64");
-  return {
-    Authorization: `Basic ${token}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
+  const values = (body as { values?: { key: string; name: string }[] })?.values ?? [];
+  return values.map((p) => ({ key: p.key, name: p.name }));
 }
 
 // Jira Cloud REST API v3 requires `description` to be Atlassian Document
@@ -79,32 +247,6 @@ function extractJiraErrorMessage(status: number, body: unknown): string {
   return `Jira request failed (${status})`;
 }
 
-// Best-effort assignee lookup by the extracted owner name. Gemini extracts
-// free-text names from the transcript, not Jira account IDs, so this is
-// necessarily fuzzy - if there isn't exactly one match, the issue is
-// created unassigned rather than failing the whole sync (PRD 6.4 lists
-// assignee as "if known", same as due date).
-async function findAssigneeAccountId(
-  baseUrl: string,
-  headers: HeadersInit,
-  name: string
-): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `${baseUrl}/rest/api/3/user/search?query=${encodeURIComponent(name)}`,
-      { headers }
-    );
-    if (!res.ok) return null;
-    const users = await res.json();
-    if (Array.isArray(users) && users.length === 1 && users[0]?.accountId) {
-      return users[0].accountId as string;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export interface CreateIssueInput {
   summary: string;
   descriptionText: string;
@@ -119,20 +261,32 @@ export interface CreateIssueResult {
   url: string;
 }
 
+// Jira assigns issues by internal accountId, which can't be resolved from a
+// freeform extracted name - assignee is intentionally left unset, with the
+// owner's name kept visible in the description instead (PRD 6.4).
 export async function createIssue(
+  userId: string,
   input: CreateIssueInput
 ): Promise<CreateIssueResult> {
-  const { baseUrl, email, apiToken, projectKey } = getJiraConfig();
-  const headers = authHeaders(email, apiToken);
+  const connection = await getValidConnection(userId);
+
+  if (!connection.projectKey) {
+    throw new JiraRequestError(
+      "No default Jira project selected — choose one on the Raise a ticket tab"
+    );
+  }
 
   const paragraphs = [input.descriptionText];
   if (input.blockerNote) {
     paragraphs.push(`Blocker: ${input.blockerNote}`);
   }
+  if (input.ownerName) {
+    paragraphs.push(`Owner: ${input.ownerName}`);
+  }
   paragraphs.push(`From meeting: ${input.meetingTitle}`);
 
   const fields: Record<string, unknown> = {
-    project: { key: projectKey },
+    project: { key: connection.projectKey },
     summary: input.summary.slice(0, 255),
     issuetype: { name: JIRA_ISSUE_TYPE },
     description: toADF(paragraphs),
@@ -142,24 +296,20 @@ export async function createIssue(
     fields.duedate = input.dueDate.toISOString().slice(0, 10);
   }
 
-  if (input.ownerName) {
-    const accountId = await findAssigneeAccountId(
-      baseUrl,
-      headers,
-      input.ownerName
-    );
-    if (accountId) {
-      fields.assignee = { accountId };
-    }
-  }
-
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}/rest/api/3/issue`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ fields }),
-    });
+    response = await fetch(
+      `${ATLASSIAN_API_URL}/ex/jira/${connection.cloudId}/rest/api/3/issue`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${connection.accessToken}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ fields }),
+      }
+    );
   } catch (err) {
     throw new JiraRequestError(
       `Could not reach Jira: ${err instanceof Error ? err.message : String(err)}`
@@ -185,5 +335,5 @@ export async function createIssue(
     );
   }
 
-  return { key, url: `${baseUrl}/browse/${key}` };
+  return { key, url: `${connection.siteUrl}/browse/${key}` };
 }

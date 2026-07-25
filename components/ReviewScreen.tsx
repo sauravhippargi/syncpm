@@ -6,9 +6,11 @@ import ActionItemCard, { type ActionItem } from "./ActionItemCard";
 export default function ReviewScreen({
   transcriptId,
   initialItems,
+  hasJiraConnection,
 }: {
   transcriptId: string;
   initialItems: ActionItem[];
+  hasJiraConnection: boolean;
 }) {
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   const [adding, setAdding] = useState(false);
@@ -49,7 +51,12 @@ export default function ReviewScreen({
       )}
 
       {items.map((item) => (
-        <ActionItemCard key={item.id} item={item} onDeleted={() => handleDelete(item.id)} />
+        <ActionItemCard
+          key={item.id}
+          item={item}
+          hasJiraConnection={hasJiraConnection}
+          onDeleted={() => handleDelete(item.id)}
+        />
       ))}
 
       {addError && <p className="text-[12px] font-medium text-danger">{addError}</p>}

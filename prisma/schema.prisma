@@ -17,9 +17,27 @@ model User {
   hashedPassword String   @map("hashed_password")
   createdAt      DateTime @default(now()) @map("created_at")
 
-  transcripts Transcript[]
+  transcripts    Transcript[]
+  jiraConnection JiraConnection?
 
   @@map("users")
+}
+
+model JiraConnection {
+  id           String   @id @default(cuid())
+  userId       String   @unique @map("user_id")
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  cloudId      String   @map("cloud_id")
+  siteUrl      String   @map("site_url")
+  siteName     String   @map("site_name")
+  projectKey   String?  @map("project_key")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("jira_connections")
 }
 
 model Transcript {

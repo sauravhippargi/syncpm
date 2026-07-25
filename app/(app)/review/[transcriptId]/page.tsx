@@ -29,6 +29,10 @@ export default async function ReviewPage({
 
   if (!transcript) notFound();
 
+  const jiraConnection = await prisma.jiraConnection.findUnique({
+    where: { userId: session.user.id },
+  });
+
   const items: ActionItem[] = transcript.actionItems.map((item) => {
     const latestSync = item.jiraSyncLogs[0];
     return {
@@ -62,7 +66,11 @@ export default async function ReviewPage({
           below.
         </p>
       </div>
-      <ReviewScreen transcriptId={transcript.id} initialItems={items} />
+      <ReviewScreen
+        transcriptId={transcript.id}
+        initialItems={items}
+        hasJiraConnection={!!jiraConnection}
+      />
     </main>
   );
 }

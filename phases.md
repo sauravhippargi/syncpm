@@ -29,22 +29,29 @@ Goal: turn this from a single-user tool into one where any PM can sign up and ke
 - Combined landing + sign in/sign up page built at the root route
 - Middleware protects `/upload`, `/review`, `/history`, `/deadlines`, `/dashboard` — redirects unauthenticated visitors to `/`, and redirects already-authenticated visitors away from `/` to `/dashboard`
 - Every existing query updated to filter by the signed-in user's `user_id`
-- **Persistent sidebar shell** (vertical nav: Dashboard, Upload transcript, Transcript history, Jira tickets, Deadlines, signed-in user + sign out) wrapping every authenticated page
+- **Persistent sidebar shell** (vertical nav: Dashboard, Upload transcript, Transcript history, Raise a ticket, Deadlines, signed-in user + sign out) wrapping every authenticated page
 - **Dashboard home page** — the real post-login landing screen: open item/blocker/synced-to-Jira counts, most recent transcript, upcoming deadlines preview, with an empty state if no transcripts exist yet
 
-## Phase 3 — Jira Integration
-Goal: prove the real third-party integration works, since this is the highest-value portfolio piece and the most likely to have surprises (auth, field mapping, API quirks).
-- Jira Cloud test workspace set up ("Acme Tech")
-- API token + Basic Auth wired up server-side
-- "Sync to Jira" button on approved action items
-- Real issue creation via Jira REST API v3
+## Phase 3 — Raise a Ticket: Jira OAuth Integration
+Goal: prove the real third-party integration works — and make it a genuine per-user connection, not a shared demo credential, since this app has real multi-user accounts.
+
+*Note: this phase was originally built with a single shared Basic Auth token (fine for a solo demo), then rebuilt on real per-user OAuth once the multi-user pivot made the shared-credential approach architecturally wrong — every user's tickets would otherwise land in the account owner's own Jira.*
+
+- Jira OAuth app registered in the Atlassian Developer Console (`JIRA_OAUTH_CLIENT_ID`/`JIRA_OAUTH_CLIENT_SECRET`)
+- `jira_connections` table added, scoped one-per-user
+- OAuth flow: connect → Atlassian consent screen → callback exchanges code for access/refresh tokens → stored against the signed-in user
+- Token refresh handled automatically before expired tokens are used
+- **"Raise a ticket" tab**, replacing the old standalone Jira tab: connector picker (Jira live; Asana/Linear "Coming soon" placeholders) when not connected; connected-workspace info, default-project selector, and recent-tickets list when connected
+- "Sync to Jira" button on approved action items, routing to this tab first if not yet connected
+- Real issue creation via Jira REST API v3, called through `api.atlassian.com` with the user's own token
 - `jira_sync_log` populated with result (synced/failed + issue link)
 
 ## Phase 4 — History & Tracking Views
 Goal: build out the remaining full-list views the Dashboard's previews link out to.
 - Transcript History tab (scoped to the signed-in user)
-- Jira Sync History tab (scoped to the signed-in user)
 - Upcoming Deadlines tab — full, filterable list of all open items across the user's own transcripts, sorted by due date
+
+*(Jira sync history now lives inside the Raise a Ticket tab from Phase 3, rather than as its own separate view.)*
 
 ## Phase 5 — Slack Message Drafting
 Goal: round out the "AI does the busywork" story.
@@ -63,6 +70,6 @@ Goal: make it presentable for a portfolio walkthrough.
 ## Future / Post-v1 Roadmap (not built now — for interview discussion)
 - Live Zoom/Google Meet integration (auto-pull transcripts instead of manual upload)
 - Live Slack sending via the Slack API (currently draft-only)
-- Per-user Jira credentials (currently: one shared workspace for all accounts)
-- OAuth 2.0 for Jira instead of Basic Auth, if a fully multi-tenant/commercial version is ever built
+- Real Asana and Linear integrations (currently "Coming soon" placeholders in the connector picker)
+- Support connecting more than one Jira site per user
 - Password reset and email verification flow

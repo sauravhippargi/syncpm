@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { createIssue, JiraRequestError } from "@/lib/jira";
+import {
+  createIssue,
+  JiraConnectionExpiredError,
+  JiraNotConnectedError,
+  JiraRequestError,
+} from "@/lib/jira";
 
 interface SyncBody {
   actionItemId?: string;
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { key, url } = await createIssue({
+    const { key, url } = await createIssue(session.user.id, {
       summary: actionItem.description,
       descriptionText: actionItem.description,
       meetingTitle: actionItem.transcript.title || "Untitled meeting",
@@ -78,7 +83,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ jiraIssueKey: key, jiraUrl: url });
   } catch (err) {
-    // Every attempt (success or failure) is logged in jira_sync_log
+    // Not connected at all - no Jira request was ever attempted, so route
+    // the client back to the Raise a ticket tab rather than logging a
+    // failed sync (rules.md section 2).
+    if (err instanceof JiraNotConnectedError) {
+      return NextResponse.json(
+        {
+          error: "Jira is not connected — connect it on the Raise a ticket tab",
+          code: "NOT_CONNECTED",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Every attempted sync (success or failure) is logged in jira_sync_log
     // (rules.md section 2).
     await prisma.jiraSyncLog.create({
       data: {
@@ -88,6 +106,13 @@ export async function POST(request: NextRequest) {
         status: "failed",
       },
     });
+
+    if (err instanceof JiraConnectionExpiredError) {
+      return NextResponse.json(
+        { error: err.message, code: "CONNECTION_EXPIRED" },
+        { status: 401 }
+      );
+    }
 
     if (err instanceof JiraRequestError) {
       console.error("Jira sync failed", err.status, err.jiraResponse);

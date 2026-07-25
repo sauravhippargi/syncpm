@@ -7,9 +7,9 @@ SyncPM is an AI-powered tool for Program Managers that turns cross-functional me
 PMs run many cross-functional meetings. Action items get buried in notes, owners aren't always clear, blockers surface verbally but never get tracked, and manually creating Jira tickets, sending follow-ups, and compiling a weekly status report eats hours every week.
 
 ## 3. Target User
-- **Primary (v1):** Any Program Manager who creates an account — each user's transcripts, action items, and history are private to them.
-- **Secondary audience:** Interviewers/hiring managers evaluating your ability to build a real, working AI-powered tool with genuine API integrations — they can sign up with their own account and try it live, not just look at a mockup.
-- Jira remains a single shared demo workspace (env-configured, e.g. "Acme Tech") — all accounts sync into the same Jira project in v1. Per-user Jira credentials are a possible future enhancement, not required now.
+- **Primary (v1):** Any Program Manager who creates an account — each user's transcripts, action items, and Jira connection are private to them.
+- **Secondary audience:** Interviewers/hiring managers evaluating your ability to build a real, working AI-powered tool with genuine API integrations — they can sign up with their own account, connect their own Jira, and try it live.
+- Each user connects their own Jira Cloud site via OAuth — there is no shared workspace. The account owner's own "Acme Tech" site is just their personal connection, made through the same flow as anyone else.
 
 ## 4. Goals (v1)
 - Demonstrate a full AI pipeline: raw transcript → structured, useful output
@@ -21,9 +21,10 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 ## 5. Non-Goals (v1)
 - No live Zoom/Google Meet integration — transcripts are uploaded manually
 - No live Slack API integration — v1 only *drafts* the message; sending is manual copy/paste
-- No per-user Jira credentials — all accounts share one env-configured Jira workspace
+- No Asana or Linear functionality — shown in the connector picker as "Coming soon" placeholders to signal the extensible design, but not functional
+- No support for connecting more than one Jira site per user in v1
 - No password reset or email verification flow — can be added later if the tool grows beyond a portfolio demo
-- No paid APIs — AI extraction runs on a free-tier cloud LLM (Gemini), auth uses a free, self-hosted library (no Clerk/Auth0)
+- No paid APIs — AI extraction runs on a free-tier cloud LLM (Gemini), auth uses a free, self-hosted library (no Clerk/Auth0), Jira OAuth app registration is free
 
 ## 6. Core Features
 
@@ -48,12 +49,15 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 - Everything is editable — reassign owners, fix wording, delete false positives, add missed items
 - Approving an item is what unlocks the "Sync to Jira" action and the drafted Slack message
 
-### 6.4 Jira Ticket Generation — real integration
-- Targets a free Jira Cloud instance (e.g. a self-created "Acme Tech" workspace)
-- Each approved action item gets a **"Sync to Jira"** button in the UI
-- Clicking it calls the real Jira REST API to create an actual issue in a chosen project — title, description (with meeting context), assignee, due date if known
+### 6.4 Raise a Ticket — connector picker + real Jira integration
+- Replaces the earlier standalone "Jira tickets" tab with a single **"Raise a ticket"** screen that also serves as the connection point for other tools
+- **Not connected:** shows a picker of connectable tools — Jira (functional), Asana and Linear (shown with logos and a "Coming soon" badge, disabled)
+- **Connecting Jira:** OAuth 2.0 — the user is redirected to Atlassian's own consent screen, approves access, and lands back in SyncPM with their own Jira site connected. No API tokens or shared credentials involved.
+- **Connected:** shows which site/workspace is connected, a default-project selector, a "Disconnect" option, and a list of recently created tickets (this list replaces the earlier separate Jira Sync History tab)
+- Each approved action item gets a **"Sync to Jira"** button; if the user hasn't connected Jira yet, clicking it routes them to this tab first
+- Clicking sync calls the real Jira REST API to create an actual issue in the user's chosen project — title, description (with meeting context), assignee left unset (see below), due date if known
 - Per-item status shown in the UI: not synced / synced / failed
-- Auth method (API token + Basic Auth vs. OAuth 2.0) — to be decided in `architecture.md`
+- Jira Cloud assigns issues by internal `accountId`, which can't be resolved from a freeform extracted name — assignee is intentionally left blank, with the owner's name kept visible in the ticket description instead
 
 ### 6.5 Slack Message Drafting
 - For each owner, AI drafts a professional, plain-language message summarizing their action item(s) from the meeting
@@ -62,7 +66,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 
 ### 6.6 Dashboard (Home)
 - The default screen after signing in — replaces a blank upload form as the landing experience, so the app feels alive on login rather than starting from zero every time
-- Persistent sidebar (logo, Dashboard, Upload transcript, Transcript history, Jira tickets, Deadlines, signed-in user + sign out) wraps every authenticated page
+- Persistent sidebar (logo, Dashboard, Upload transcript, Transcript history, Raise a ticket, Deadlines, signed-in user + sign out) wraps every authenticated page
 - Shows: open action item count, blocker count, tickets synced to Jira; the most recently uploaded transcript with a link into its Review screen; a short preview of upcoming deadlines
 - If no transcripts exist yet, shows an empty state with a clear call-to-action to upload the first one
 
@@ -70,11 +74,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 - List of all previously uploaded transcripts (filename, meeting title/date if available, upload timestamp)
 - Clicking into one reopens its extracted action items, owners, blockers, and current Jira sync status
 
-### 6.8 Jira Sync History
-- Log of every Jira ticket SyncPM has ever created, each entry showing: source meeting, ticket link, assignee, sync status (synced/failed), timestamp
-- Doubles as an audit trail — useful for a demo to show the traceable path from "meeting" to "real ticket"
-
-### 6.9 Upcoming Deadlines Tab
+### 6.8 Upcoming Deadlines Tab
 - Cross-meeting view of all open action items sorted by due date (soonest first)
 - Complements the Dashboard's deadlines preview (6.6), which only shows a short list — this is the full, filterable view
 - Overdue items are visually flagged
@@ -87,7 +87,7 @@ PMs run many cross-functional meetings. Action items get buried in notes, owners
 ## 8. Open Questions
 - How due dates get inferred when not explicitly stated in the transcript
 - Fallback behavior when owner matching fails (nicknames, unclear pronouns, etc.)
-- Whether per-user Jira credentials become a future feature (currently: one shared workspace for all accounts)
+- Whether Asana/Linear become real integrations later, or stay as "Coming soon" indefinitely
 - Whether password reset/email verification gets added later, or stays out of scope permanently
 
-**Resolved:** Jira uses API token + Basic Auth · LLM is Gemini · Auth uses Auth.js (Credentials provider), not Clerk/Auth0
+**Resolved:** Jira uses OAuth 2.0 (per-user, no shared credentials) · LLM is Gemini · Auth uses Auth.js (Credentials provider), not Clerk/Auth0

@@ -22,9 +22,11 @@ function toDateInputValue(iso: string | null): string {
 
 export default function ActionItemCard({
   item,
+  hasJiraConnection,
   onDeleted,
 }: {
   item: ActionItem;
+  hasJiraConnection: boolean;
   onDeleted: () => void;
 }) {
   const [description, setDescription] = useState(item.description);
@@ -223,6 +225,7 @@ export default function ActionItemCard({
       <JiraSyncButton
         actionItemId={item.id}
         approved={baseline.isApproved}
+        hasJiraConnection={hasJiraConnection}
         initialSync={item.jiraSync}
       />
     </div>
