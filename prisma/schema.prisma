@@ -44,6 +44,7 @@ model ActionItem {
   status       String    @default("open") // "open" | "done"
   isBlocker    Boolean   @default(false) @map("is_blocker")
   blockerNote  String?   @map("blocker_note")
+  isApproved   Boolean   @default(false) @map("is_approved")
 
   transcript   Transcript    @relation(fields: [transcriptId], references: [id])
   jiraSyncLogs JiraSyncLog[]

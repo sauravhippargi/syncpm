@@ -56,7 +56,22 @@ export async function POST(request: NextRequest) {
         blockerNote: null,
       },
     });
-    return NextResponse.json({ item }, { status: 201 });
+    return NextResponse.json(
+      {
+        item: {
+          id: item.id,
+          description: item.description,
+          owner: item.owner,
+          dueDate: item.dueDate ? item.dueDate.toISOString() : null,
+          status: item.status,
+          isBlocker: item.isBlocker,
+          blockerNote: item.blockerNote,
+          isApproved: item.isApproved,
+          jiraSync: null,
+        },
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("Failed to create action item", err);
     return NextResponse.json(

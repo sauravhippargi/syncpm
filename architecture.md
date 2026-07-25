@@ -103,7 +103,7 @@ syncpm/
 
 - **users** — `id`, `email` (unique), `hashed_password`, `created_at`
 - **transcripts** — `id`, `user_id` (FK, owner), `title`, `uploaded_at`, `raw_text`
-- **action_items** — `id`, `transcript_id` (FK), `description`, `owner`, `due_date`, `status` (open/done), `is_blocker`, `blocker_note`
+- **action_items** — `id`, `transcript_id` (FK), `description`, `owner`, `due_date`, `status` (open/done), `is_blocker`, `blocker_note`, `is_approved` (unlocks Sync to Jira, per PRD 6.3)
 - **jira_sync_log** — `id`, `action_item_id` (FK), `jira_issue_key`, `jira_url`, `status` (synced/failed), `synced_at`
 
 Ownership is scoped at the `transcripts` level only — `action_items` and `jira_sync_log` inherit ownership through their parent transcript, so every query for a user's data filters `transcripts` by `user_id` first, then joins down.

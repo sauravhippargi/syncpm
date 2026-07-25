@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import JiraSyncButton, { type JiraSyncState } from "./JiraSyncButton";
 
 export interface ActionItem {
   id: string;
@@ -10,6 +11,8 @@ export interface ActionItem {
   status: string;
   isBlocker: boolean;
   blockerNote: string | null;
+  isApproved: boolean;
+  jiraSync: JiraSyncState | null;
 }
 
 function toDateInputValue(iso: string | null): string {
@@ -30,6 +33,7 @@ export default function ActionItemCard({
   const [isBlocker, setIsBlocker] = useState(item.isBlocker);
   const [blockerNote, setBlockerNote] = useState(item.blockerNote ?? "");
   const [status, setStatus] = useState(item.status);
+  const [isApproved, setIsApproved] = useState(item.isApproved);
 
   const [baseline, setBaseline] = useState(item);
   const [saving, setSaving] = useState(false);
@@ -43,7 +47,8 @@ export default function ActionItemCard({
     dueDate !== toDateInputValue(baseline.dueDate) ||
     isBlocker !== baseline.isBlocker ||
     blockerNote !== (baseline.blockerNote ?? "") ||
-    status !== baseline.status;
+    status !== baseline.status ||
+    isApproved !== baseline.isApproved;
 
   function markDirty() {
     setSaved(false);
@@ -61,6 +66,7 @@ export default function ActionItemCard({
       isBlocker,
       blockerNote: isBlocker ? blockerNote.trim() || null : null,
       status,
+      isApproved,
     };
 
     try {
@@ -167,6 +173,18 @@ export default function ActionItemCard({
           />
           Blocker
         </label>
+
+        <label className="flex items-center gap-1.5 text-[12px] font-medium text-accent">
+          <input
+            type="checkbox"
+            checked={isApproved}
+            onChange={(e) => {
+              setIsApproved(e.target.checked);
+              markDirty();
+            }}
+          />
+          Approved
+        </label>
       </div>
 
       {isBlocker && (
@@ -201,6 +219,12 @@ export default function ActionItemCard({
           {deleting ? "Deleting…" : "Delete"}
         </button>
       </div>
+
+      <JiraSyncButton
+        actionItemId={item.id}
+        approved={baseline.isApproved}
+        initialSync={item.jiraSync}
+      />
     </div>
   );
 }

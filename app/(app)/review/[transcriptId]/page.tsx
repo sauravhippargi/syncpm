@@ -19,20 +19,36 @@ export default async function ReviewPage({
 
   const transcript = await prisma.transcript.findFirst({
     where: { id: transcriptId, userId: session.user.id },
-    include: { actionItems: { orderBy: { id: "asc" } } },
+    include: {
+      actionItems: {
+        orderBy: { id: "asc" },
+        include: { jiraSyncLogs: { orderBy: { syncedAt: "desc" }, take: 1 } },
+      },
+    },
   });
 
   if (!transcript) notFound();
 
-  const items: ActionItem[] = transcript.actionItems.map((item) => ({
-    id: item.id,
-    description: item.description,
-    owner: item.owner,
-    dueDate: item.dueDate ? item.dueDate.toISOString() : null,
-    status: item.status,
-    isBlocker: item.isBlocker,
-    blockerNote: item.blockerNote,
-  }));
+  const items: ActionItem[] = transcript.actionItems.map((item) => {
+    const latestSync = item.jiraSyncLogs[0];
+    return {
+      id: item.id,
+      description: item.description,
+      owner: item.owner,
+      dueDate: item.dueDate ? item.dueDate.toISOString() : null,
+      status: item.status,
+      isBlocker: item.isBlocker,
+      blockerNote: item.blockerNote,
+      isApproved: item.isApproved,
+      jiraSync: latestSync
+        ? {
+            status: latestSync.status as "synced" | "failed",
+            jiraIssueKey: latestSync.jiraIssueKey,
+            jiraUrl: latestSync.jiraUrl,
+          }
+        : null,
+    };
+  });
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">

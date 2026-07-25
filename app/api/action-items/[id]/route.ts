@@ -9,6 +9,7 @@ interface UpdateActionItemBody {
   isBlocker?: boolean;
   blockerNote?: string | null;
   status?: string;
+  isApproved?: boolean;
 }
 
 // action_items have no userId of their own — ownership is inherited through
@@ -61,6 +62,7 @@ export async function PATCH(
   if (body.isBlocker !== undefined) data.isBlocker = body.isBlocker;
   if (body.blockerNote !== undefined) data.blockerNote = body.blockerNote;
   if (body.status !== undefined) data.status = body.status;
+  if (body.isApproved !== undefined) data.isApproved = body.isApproved;
 
   try {
     const item = await prisma.actionItem.update({ where: { id }, data });
