@@ -46,10 +46,11 @@
 ## 5. Boundaries for Claude Code (the build agent)
 
 - Don't add a new npm package without flagging it first — check it against the "Avoid" list above before installing
-- Don't invent new database tables/fields without also updating `architecture.md` to match
+- Don't invent new database tables/fields without flagging the gap — `architecture.md` is maintained elsewhere, not edited directly (see below)
 - Don't restructure the folder layout defined in `architecture.md` without discussing it first
 - If a task is ambiguous or underspecified, leave a clear `// TODO:` comment and flag it — don't silently guess and ship a stub
 - Match the file/folder structure and naming already defined in `architecture.md`
+- Never edit `prd.md`, `architecture.md`, `rules.md`, `phases.md`, or `design.md` directly — these are maintained in the separate planning conversation. If something in the codebase conflicts with what's written there, flag it clearly in your response instead of editing the file yourself.
 
 ## 6. Testing (assumption — flag if you want this changed)
 - No full automated test suite required for v1, given this is a portfolio project on a tight build timeline
