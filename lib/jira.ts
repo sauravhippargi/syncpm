@@ -323,6 +323,10 @@ export interface CreateIssueInput {
   dueDate?: Date | null;
   assigneeAccountId?: string | null;
   priority?: string | null;
+  // Falls back to the connection's stored default project when omitted —
+  // RaiseATicketModal always passes the project currently selected there,
+  // which isn't necessarily that default (PRD 6.4).
+  projectKey?: string | null;
 }
 
 export interface CreateIssueResult {
@@ -339,9 +343,10 @@ export async function createIssue(
 ): Promise<CreateIssueResult> {
   const connection = await getValidConnection(userId);
 
-  if (!connection.projectKey) {
+  const projectKey = input.projectKey || connection.projectKey;
+  if (!projectKey) {
     throw new JiraRequestError(
-      "No default Jira project selected — choose one on the Raise a ticket tab"
+      "No Jira project selected — choose one in the ticket modal"
     );
   }
 
@@ -355,7 +360,7 @@ export async function createIssue(
   paragraphs.push(`From meeting: ${input.meetingTitle}`);
 
   const fields: Record<string, unknown> = {
-    project: { key: connection.projectKey },
+    project: { key: projectKey },
     summary: input.summary.slice(0, 255),
     issuetype: { name: JIRA_ISSUE_TYPE },
     description: toADF(paragraphs),

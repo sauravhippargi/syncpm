@@ -9,6 +9,11 @@ interface AssignableUser {
   displayName: string;
 }
 
+interface JiraProject {
+  key: string;
+  name: string;
+}
+
 const JIRA_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
 
 // Best-effort case-insensitive match against the extracted owner string —
@@ -54,6 +59,14 @@ export default function RaiseATicketModal({
   onClose: () => void;
   onCreated: (result: { jiraIssueKey: string; jiraUrl: string }) => void;
 }) {
+  const connected = !!jiraConnection;
+
+  const [projects, setProjects] = useState<JiraProject[] | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [selectedProjectKey, setSelectedProjectKey] = useState(
+    () => jiraConnection?.projectKey ?? ""
+  );
+
   const [users, setUsers] = useState<AssignableUser[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [connectionExpired, setConnectionExpired] = useState(false);
@@ -64,16 +77,47 @@ export default function RaiseATicketModal({
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const connected = !!jiraConnection;
-  const projectKey = jiraConnection?.projectKey ?? null;
+  useEffect(() => {
+    if (!connected) return;
+    let cancelled = false;
+
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/integrations/jira/projects");
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setProjectsError(data.error || "Failed to load Jira projects");
+          setConnectionExpired(data.code === "CONNECTION_EXPIRED");
+          return;
+        }
+        setProjects(data.projects);
+        // Fall back to the first accessible project if there's no stored
+        // default yet — always overridable via the dropdown (PRD 6.4).
+        setSelectedProjectKey(
+          (prev: string) => prev || jiraConnection?.projectKey || data.projects[0]?.key || ""
+        );
+      } catch {
+        if (!cancelled) setProjectsError("Failed to load Jira projects");
+      }
+    }
+
+    loadProjects();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected]);
 
   useEffect(() => {
-    if (!connected || !projectKey) return;
+    if (!connected || !selectedProjectKey) return;
     let cancelled = false;
 
     async function loadUsers() {
       try {
-        const res = await fetch("/api/integrations/jira/assignable-users");
+        const res = await fetch(
+          `/api/integrations/jira/assignable-users?projectKey=${encodeURIComponent(selectedProjectKey)}`
+        );
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok) {
@@ -93,7 +137,17 @@ export default function RaiseATicketModal({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, projectKey]);
+  }, [connected, selectedProjectKey]);
+
+  function handleProjectChange(projectKey: string) {
+    setSelectedProjectKey(projectKey);
+    // Clear the stale accountId immediately rather than leaving the old
+    // project's selection visible while the new list loads.
+    setUsers(null);
+    setAssigneeAccountId("");
+    setLoadError(null);
+    setConnectionExpired(false);
+  }
 
   async function handleCreate() {
     setCreating(true);
@@ -105,6 +159,7 @@ export default function RaiseATicketModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           actionItemId,
+          projectKey: selectedProjectKey,
           assigneeAccountId: assigneeAccountId || null,
           priority,
         }),
@@ -138,27 +193,17 @@ export default function RaiseATicketModal({
             Raise a ticket
           </h2>
           <p className="text-[13px] leading-[1.4] text-text-secondary">
-            {connected && projectKey
-              ? `Creating in ${jiraConnection.siteName} (${projectKey}) via Jira`
-              : connected
-                ? "Connected to Jira, but no default project is selected yet."
-                : "Connect a tool to create a ticket for this action item."}
+            {connected
+              ? "Creating a ticket via Jira"
+              : "Connect a tool to create a ticket for this action item."}
           </p>
         </div>
 
         {!connected ? (
           <ConnectorPicker connectHref={connectHref} />
-        ) : !projectKey ? (
-          <p className="rounded-[10px] border border-danger-tint bg-danger-tint px-3 py-2 text-[13px] font-medium text-danger">
-            No default Jira project selected —{" "}
-            <a href="/raise-a-ticket" className="underline">
-              choose one on the Raise a ticket tab
-            </a>
-            .
-          </p>
-        ) : loadError ? (
+        ) : projectsError ? (
           <div className="flex flex-col gap-2">
-            <p className="text-[13px] font-medium text-danger">{loadError}</p>
+            <p className="text-[13px] font-medium text-danger">{projectsError}</p>
             {connectionExpired && (
               <a
                 href={connectHref}
@@ -168,54 +213,102 @@ export default function RaiseATicketModal({
               </a>
             )}
           </div>
-        ) : !users ? (
-          <p className="text-[13px] text-text-secondary">
-            Loading assignable users…
+        ) : !projects ? (
+          <p className="text-[13px] text-text-secondary">Loading projects…</p>
+        ) : projects.length === 0 ? (
+          <p className="rounded-[10px] border border-danger-tint bg-danger-tint px-3 py-2 text-[13px] font-medium text-danger">
+            No accessible Jira projects found for this connection.
           </p>
         ) : (
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="ticket-assignee"
+                htmlFor="ticket-project"
                 className="text-[12px] font-medium text-text-secondary"
               >
-                Assignee
+                Project
               </label>
               <select
-                id="ticket-assignee"
-                value={assigneeAccountId}
-                onChange={(e) => setAssigneeAccountId(e.target.value)}
-                className="h-8 w-56 rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
+                id="ticket-project"
+                value={selectedProjectKey}
+                onChange={(e) => handleProjectChange(e.target.value)}
+                className="h-8 w-full max-w-xs rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
               >
-                <option value="">Unassigned</option>
-                {users.map((u) => (
-                  <option key={u.accountId} value={u.accountId}>
-                    {u.displayName}
+                {!selectedProjectKey && (
+                  <option value="" disabled>
+                    Choose a project…
+                  </option>
+                )}
+                {projects.map((p) => (
+                  <option key={p.key} value={p.key}>
+                    {p.name} ({p.key})
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="ticket-priority"
-                className="text-[12px] font-medium text-text-secondary"
-              >
-                Priority
-              </label>
-              <select
-                id="ticket-priority"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="h-8 w-40 rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
-              >
-                {JIRA_PRIORITIES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {loadError ? (
+              <div className="flex items-center gap-2">
+                <p className="text-[13px] font-medium text-danger">{loadError}</p>
+                {connectionExpired && (
+                  <a
+                    href={connectHref}
+                    className="text-[13px] font-medium text-accent underline"
+                  >
+                    Reconnect
+                  </a>
+                )}
+              </div>
+            ) : !users ? (
+              <p className="text-[13px] text-text-secondary">
+                Loading assignable users…
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="ticket-assignee"
+                    className="text-[12px] font-medium text-text-secondary"
+                  >
+                    Assignee
+                  </label>
+                  <select
+                    id="ticket-assignee"
+                    value={assigneeAccountId}
+                    onChange={(e) => setAssigneeAccountId(e.target.value)}
+                    className="h-8 w-56 rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.accountId} value={u.accountId}>
+                        {u.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label
+                    htmlFor="ticket-priority"
+                    className="text-[12px] font-medium text-text-secondary"
+                  >
+                    Priority
+                  </label>
+                  <select
+                    id="ticket-priority"
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="h-8 w-40 rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
+                  >
+                    {JIRA_PRIORITIES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -242,7 +335,7 @@ export default function RaiseATicketModal({
           >
             Cancel
           </button>
-          {connected && projectKey && users && (
+          {connected && selectedProjectKey && users && (
             <button
               type="button"
               onClick={handleCreate}

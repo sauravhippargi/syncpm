@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
@@ -8,7 +8,7 @@ import {
   JiraRequestError,
 } from "@/lib/jira";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -26,10 +26,14 @@ export async function GET() {
       { status: 400 }
     );
   }
-  if (!connection.projectKey) {
+
+  // The project can be switched ad hoc in RaiseATicketModal, so it isn't
+  // necessarily the connection's stored default (PRD 6.4).
+  const projectKey = request.nextUrl.searchParams.get("projectKey") || connection.projectKey;
+  if (!projectKey) {
     return NextResponse.json(
       {
-        error: "No default Jira project selected — choose one on the Raise a ticket tab",
+        error: "No Jira project selected — choose one in the ticket modal",
         code: "NO_PROJECT",
       },
       { status: 400 }
@@ -37,7 +41,7 @@ export async function GET() {
   }
 
   try {
-    const users = await getAssignableUsers(session.user.id, connection.projectKey);
+    const users = await getAssignableUsers(session.user.id, projectKey);
     return NextResponse.json({ users });
   } catch (err) {
     if (err instanceof JiraNotConnectedError) {

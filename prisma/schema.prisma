@@ -75,6 +75,7 @@ model JiraSyncLog {
   actionItemId      String   @map("action_item_id")
   jiraIssueKey      String?  @map("jira_issue_key")
   jiraUrl           String?  @map("jira_url")
+  jiraProjectKey    String?  @map("jira_project_key")
   assigneeAccountId String?  @map("assignee_account_id")
   priority          String?
   status            String // "synced" | "failed"
