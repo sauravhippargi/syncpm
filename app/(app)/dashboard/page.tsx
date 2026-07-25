@@ -37,9 +37,18 @@ export default async function DashboardPage() {
 
   const allItems = transcripts.flatMap((t) => t.actionItems);
   const openItems = allItems.filter((item) => item.status === "open");
-  const openBlockers = openItems.filter((item) => isBlockerNote(item.blockerNote));
-  const doneItems = allItems.filter((item) => item.status === "done");
-  const syncedCount = allItems.reduce(
+
+  // The four stat cards must mirror the Action Items tab's own query exactly
+  // (isApproved: true, prd.md 6.3a) so a KPI number never disagrees with what
+  // that tab actually lists. Recent Transcripts' pill counts (allItems) and
+  // the Upcoming Deadlines preview (openItems) intentionally stay unscoped,
+  // matching the standalone Deadlines tab's own query, which also doesn't
+  // filter by isApproved.
+  const approvedItems = allItems.filter((item) => item.isApproved);
+  const openApprovedItems = approvedItems.filter((item) => item.status === "open");
+  const approvedBlockers = openApprovedItems.filter((item) => isBlockerNote(item.blockerNote));
+  const doneApprovedItems = approvedItems.filter((item) => item.status === "done");
+  const syncedCount = approvedItems.reduce(
     (sum, item) =>
       sum + item.jiraSyncLogs.filter((log) => log.status === "synced").length,
     0
@@ -64,17 +73,17 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-4 gap-3">
         <StatTile
           label="Open action items"
-          value={openItems.length}
+          value={openApprovedItems.length}
           href="/action-items"
         />
         <StatTile
           label="Blockers"
-          value={openBlockers.length}
+          value={approvedBlockers.length}
           tone="warning"
         />
         <StatTile
           label="Completed action items"
-          value={doneItems.length}
+          value={doneApprovedItems.length}
           tone="success"
         />
         <StatTile label="Tickets raised" value={syncedCount} tone="success" />

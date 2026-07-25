@@ -8,6 +8,7 @@ import JiraSyncButton, {
   type JiraSyncState,
 } from "./JiraSyncButton";
 import DeleteActionItemButton from "./DeleteActionItemButton";
+import ActionItemStatusSelect from "./ActionItemStatusSelect";
 import { isBlockerNote } from "@/lib/action-items";
 
 export interface ActionItemRowData {
@@ -15,6 +16,7 @@ export interface ActionItemRowData {
   description: string;
   owner: string | null;
   dueDate: string | null;
+  status: string;
   blockerNote: string | null;
   transcriptId: string;
   transcriptTitle: string | null;
@@ -82,13 +84,16 @@ export default function ActionItemRow({
         </div>
       </div>
 
-      <JiraSyncButton
-        actionItemId={item.id}
-        owner={item.owner}
-        blockerNote={item.blockerNote}
-        jiraConnection={jiraConnection}
-        initialSync={item.jiraSync}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <JiraSyncButton
+          actionItemId={item.id}
+          owner={item.owner}
+          blockerNote={item.blockerNote}
+          jiraConnection={jiraConnection}
+          initialSync={item.jiraSync}
+        />
+        <ActionItemStatusSelect actionItemId={item.id} status={item.status} />
+      </div>
     </li>
   );
 }
