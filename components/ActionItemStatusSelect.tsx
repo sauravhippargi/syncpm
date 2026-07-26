@@ -18,11 +18,13 @@ export default function ActionItemStatusSelect({
   const router = useRouter();
   const [value, setValue] = useState(status);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleChange(next: string) {
     const previous = value;
     setValue(next);
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch(`/api/action-items/${actionItemId}`, {
         method: "PATCH",
@@ -30,11 +32,14 @@ export default function ActionItemStatusSelect({
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Failed to update status");
         setValue(previous);
         return;
       }
       router.refresh();
     } catch {
+      setError("Failed to update status — check your connection");
       setValue(previous);
     } finally {
       setSaving(false);
@@ -42,15 +47,18 @@ export default function ActionItemStatusSelect({
   }
 
   return (
-    <select
-      value={value}
-      disabled={saving}
-      onChange={(e) => handleChange(e.target.value)}
-      aria-label="Status"
-      className="h-7 rounded-[6px] border border-border bg-card px-2 text-[12px] text-text-primary outline-none focus:border-accent disabled:opacity-50"
-    >
-      <option value="open">Open</option>
-      <option value="done">Done</option>
-    </select>
+    <div className="flex flex-col gap-1">
+      <select
+        value={value}
+        disabled={saving}
+        onChange={(e) => handleChange(e.target.value)}
+        aria-label="Status"
+        className="h-7 rounded-[6px] border border-border bg-card px-2 text-[12px] text-text-primary outline-none focus:border-accent disabled:opacity-50"
+      >
+        <option value="open">Open</option>
+        <option value="done">Done</option>
+      </select>
+      {error && <p className="text-[11px] font-medium text-danger">{error}</p>}
+    </div>
   );
 }
