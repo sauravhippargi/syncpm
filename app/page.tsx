@@ -50,26 +50,20 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Sticky nav — logo only */}
-      <header className="sticky top-0 z-10 border-b border-border bg-page/85 backdrop-blur">
-        <div className="mx-auto flex max-w-[1200px] items-center px-6 py-3">
-          <Image
-            src="/logo-full.png"
-            alt="SyncPM"
-            width={44}
-            height={44}
-            priority
-            unoptimized
-            className="h-11 w-auto"
-          />
-        </div>
-      </header>
-
       <main className="flex-1">
         {/* Hero */}
         <section id="signin" className="mx-auto max-w-[1200px] scroll-mt-20 px-6 pb-10 pt-16">
-          <div className="grid items-start gap-12 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="grid items-end gap-12 lg:grid-cols-[1.3fr_0.7fr]">
             <div>
+              <Image
+                src="/logo-full.png"
+                alt="SyncPM"
+                width={72}
+                height={72}
+                priority
+                unoptimized
+                className="mb-6 h-16 w-auto"
+              />
               <h1 className="max-w-xl text-[38px] font-bold leading-[1.15] tracking-[-0.025em] text-text-primary">
                 Meeting notes that turn themselves into tracked work
               </h1>
