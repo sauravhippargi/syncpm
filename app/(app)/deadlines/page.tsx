@@ -10,16 +10,24 @@ export default async function DeadlinesPage() {
     redirect("/");
   }
 
-  const items = await prisma.actionItem.findMany({
-    where: {
-      status: "open",
-      isApproved: true,
-      dueDate: { not: null },
-      transcript: { userId: session.user.id },
-    },
-    include: { transcript: true },
-    orderBy: { dueDate: "asc" },
-  });
+  const [items, approvedCount] = await Promise.all([
+    prisma.actionItem.findMany({
+      where: {
+        status: "open",
+        isApproved: true,
+        dueDate: { not: null },
+        transcript: { userId: session.user.id },
+      },
+      include: { transcript: true },
+      orderBy: { dueDate: "asc" },
+    }),
+    // Checked independently of the due-date-filtered query above, so the
+    // empty state can tell apart "no approved items at all" from "approved
+    // items exist, just none with a due date set yet" (prd.md 6.8).
+    prisma.actionItem.count({
+      where: { isApproved: true, transcript: { userId: session.user.id } },
+    }),
+  ]);
 
   // Due dates are date-only values stored at UTC midnight — compare them in
   // UTC so "overdue" and the displayed date never shift based on the
@@ -33,17 +41,38 @@ export default async function DeadlinesPage() {
       </h1>
 
       {items.length === 0 ? (
+        // Two distinct empty states, not one (prd.md 6.8) — tell apart "no
+        // approved items exist at all" from "approved items exist, just
+        // none with a due date set yet." Uploading another transcript
+        // doesn't fix the second case, so it gets a different CTA.
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
-          <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
-            No open action items with a due date yet — upload a transcript to
-            start tracking deadlines.
-          </p>
-          <Link
-            href="/upload"
-            className="flex h-8 items-center rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
-          >
-            Upload a transcript
-          </Link>
+          {approvedCount === 0 ? (
+            <>
+              <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
+                No action items yet — upload a transcript to start tracking
+                deadlines.
+              </p>
+              <Link
+                href="/upload"
+                className="flex h-8 items-center rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
+              >
+                Upload a transcript
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="max-w-sm text-[14px] leading-[1.5] text-text-secondary">
+                Your action items don&apos;t have due dates yet — add one to
+                start tracking deadlines here.
+              </p>
+              <Link
+                href="/action-items"
+                className="flex h-8 items-center rounded-[6px] bg-accent px-3 text-[12px] font-medium text-white"
+              >
+                Go to Action items
+              </Link>
+            </>
+          )}
         </div>
       ) : (
         <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
