@@ -12,9 +12,8 @@ const DEFAULT_MESSAGES = [
 
 const MESSAGE_INTERVAL_MS = 1600;
 
-// Reused wherever a Gemini call is in flight (extraction on Upload, Slack
-// drafting on Review & Edit) — same spinner/staged-message pattern, just a
-// different message sequence passed in per context.
+// Staged-message loading state shown while a Gemini call is in flight
+// (extraction on Upload) — cycles through `messages` at a fixed interval.
 export default function ExtractionLoader({
   messages = DEFAULT_MESSAGES,
 }: {

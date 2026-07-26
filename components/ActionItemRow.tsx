@@ -7,6 +7,7 @@ import JiraSyncButton, {
   type JiraConnectionSummary,
   type JiraSyncState,
 } from "./JiraSyncButton";
+import SlackDraftModal from "./SlackDraftModal";
 import DeleteActionItemButton from "./DeleteActionItemButton";
 import ActionItemStatusSelect from "./ActionItemStatusSelect";
 import { isBlockerNote } from "@/lib/action-items";
@@ -85,6 +86,7 @@ export default function ActionItemRow({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <ActionItemStatusSelect actionItemId={item.id} status={item.status} />
         <JiraSyncButton
           actionItemId={item.id}
           owner={item.owner}
@@ -92,7 +94,7 @@ export default function ActionItemRow({
           jiraConnection={jiraConnection}
           initialSync={item.jiraSync}
         />
-        <ActionItemStatusSelect actionItemId={item.id} status={item.status} />
+        <SlackDraftModal actionItemId={item.id} owner={item.owner} />
       </div>
     </li>
   );

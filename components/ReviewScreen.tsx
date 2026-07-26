@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ActionItemCard, { type ActionItem } from "./ActionItemCard";
-import SlackDraftCard from "./SlackDraftCard";
 
 export default function ReviewScreen({
   transcriptId,
@@ -141,11 +140,6 @@ export default function ReviewScreen({
   }
 
   const allChecked = items.length > 0 && items.every((item) => selectedIds.has(item.id));
-  // Slack follow-ups is a permanent part of this transcript's detail page,
-  // not a one-time step — shown any time at least one item here is
-  // approved, whether that happened just now or on a past visit
-  // (prd.md 6.5).
-  const hasApprovedItems = items.some((item) => item.isApproved);
 
   return (
     <div className="flex flex-col gap-3">
@@ -193,8 +187,6 @@ export default function ReviewScreen({
       >
         {adding ? "Adding…" : "+ Add item"}
       </button>
-
-      {hasApprovedItems && <SlackDraftCard transcriptId={transcriptId} />}
     </div>
   );
 }

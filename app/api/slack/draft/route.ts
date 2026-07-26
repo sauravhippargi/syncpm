@@ -6,18 +6,11 @@ import { buildSlackDraftPrompt } from "@/lib/prompts/slack-draft";
 import { isBlockerNote } from "@/lib/action-items";
 
 // Vercel Hobby default function timeout is 10s (architecture.md section 5) —
-// one Gemini call per owner can add up past that on transcripts with
-// several distinct owners.
-export const maxDuration = 60;
+// a single Gemini call plus retries can add up past that.
+export const maxDuration = 30;
 
 interface DraftBody {
-  transcriptId?: string;
-}
-
-export interface SlackDraftResult {
-  owner: string | null;
-  message: string | null;
-  items: { id: string; description: string }[];
+  actionItemId?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -39,90 +32,56 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const transcriptId = body.transcriptId;
-  if (!transcriptId) {
+  const actionItemId = body.actionItemId;
+  if (!actionItemId) {
     return NextResponse.json(
-      { error: "transcriptId is required", code: "MISSING_TRANSCRIPT_ID" },
+      { error: "actionItemId is required", code: "MISSING_ACTION_ITEM_ID" },
       { status: 400 }
     );
   }
 
   // action_items have no userId of their own — ownership is inherited
   // through the parent transcript (architecture.md section 4).
-  const transcript = await prisma.transcript.findFirst({
-    where: { id: transcriptId, userId: session.user.id },
-    include: {
-      actionItems: { where: { isApproved: true }, orderBy: { id: "asc" } },
-    },
+  const item = await prisma.actionItem.findFirst({
+    where: { id: actionItemId, transcript: { userId: session.user.id } },
   });
-  if (!transcript) {
+  if (!item) {
     return NextResponse.json(
-      { error: "Transcript not found", code: "NOT_FOUND" },
+      { error: "Action item not found", code: "NOT_FOUND" },
       { status: 404 }
     );
   }
 
-  const meetingTitle = transcript.title || "Untitled meeting";
-
-  // Group approved items by owner — items with no owner assigned skip
-  // Gemini entirely and surface as a separate "needs an owner" group instead
-  // of a drafted message.
-  const withOwner = new Map<string, typeof transcript.actionItems>();
-  const unassigned: typeof transcript.actionItems = [];
-
-  for (const item of transcript.actionItems) {
-    const owner = item.owner?.trim();
-    if (owner) {
-      const list = withOwner.get(owner) ?? [];
-      list.push(item);
-      withOwner.set(owner, list);
-    } else {
-      unassigned.push(item);
-    }
+  const owner = item.owner?.trim();
+  if (!owner) {
+    return NextResponse.json(
+      { error: "This item has no owner assigned", code: "MISSING_OWNER" },
+      { status: 400 }
+    );
   }
 
-  const results: SlackDraftResult[] = [];
+  const prompt = buildSlackDraftPrompt({
+    description: item.description,
+    owner,
+    dueDate: item.dueDate ? item.dueDate.toISOString().slice(0, 10) : null,
+    blockerNote: isBlockerNote(item.blockerNote) ? item.blockerNote : null,
+  });
 
   try {
-    for (const [owner, items] of withOwner) {
-      const prompt = buildSlackDraftPrompt(
-        owner,
-        meetingTitle,
-        items.map((item) => ({
-          description: item.description,
-          dueDate: item.dueDate ? item.dueDate.toISOString().slice(0, 10) : null,
-          blockerNote: isBlockerNote(item.blockerNote) ? item.blockerNote : null,
-        }))
-      );
-      const message = await draftSlackMessage(prompt);
-      results.push({
-        owner,
-        message,
-        items: items.map((item) => ({ id: item.id, description: item.description })),
-      });
-    }
+    const message = await draftSlackMessage(prompt);
+    return NextResponse.json({ message });
   } catch (err) {
     if (err instanceof GeminiRequestError) {
       console.error("Slack draft generation failed", err);
       return NextResponse.json(
-        { error: "Failed to draft Slack messages — try again", code: "GEMINI_REQUEST_FAILED" },
+        { error: "Failed to draft the message — try again", code: "GEMINI_REQUEST_FAILED" },
         { status: 502 }
       );
     }
     console.error("Slack draft generation failed", err);
     return NextResponse.json(
-      { error: "Failed to draft Slack messages — try again", code: "UNKNOWN_ERROR" },
+      { error: "Failed to draft the message — try again", code: "UNKNOWN_ERROR" },
       { status: 500 }
     );
   }
-
-  if (unassigned.length > 0) {
-    results.push({
-      owner: null,
-      message: null,
-      items: unassigned.map((item) => ({ id: item.id, description: item.description })),
-    });
-  }
-
-  return NextResponse.json({ drafts: results });
 }
