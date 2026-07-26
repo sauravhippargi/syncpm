@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Sidebar from "@/components/Sidebar";
+import MobileNav from "@/components/MobileNav";
 
 export default async function AppLayout({
   children,
@@ -14,9 +15,12 @@ export default async function AppLayout({
     redirect("/");
   }
 
+  const userEmail = session.user.email ?? "";
+
   return (
-    <div className="flex flex-1">
-      <Sidebar userEmail={session.user.email ?? ""} />
+    <div className="flex flex-1 flex-col md:flex-row">
+      <MobileNav userEmail={userEmail} />
+      <Sidebar userEmail={userEmail} />
       <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
     </div>
   );
