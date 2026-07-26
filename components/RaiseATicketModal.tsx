@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ConnectorPicker from "./ConnectorPicker";
 import type { JiraConnectionSummary } from "./JiraSyncButton";
 
-interface AssignableUser {
+export interface AssignableUser {
   accountId: string;
   displayName: string;
 }
 
-interface JiraProject {
+export interface JiraProject {
   key: string;
   name: string;
 }
@@ -18,8 +18,11 @@ const JIRA_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
 
 // Best-effort case-insensitive match against the extracted owner string —
 // a convenience default only, always overridable in the dropdown
-// (architecture.md section 5, "Assignee resolution").
-function findBestAssigneeMatch(
+// (architecture.md section 5, "Assignee resolution"). Exported because the
+// match is computed in JiraSyncButton, right after it fetches the
+// assignable-users list itself (see that file for why the fetch lives
+// there instead of in this component).
+export function findBestAssigneeMatch(
   owner: string | null,
   users: AssignableUser[]
 ): string {
@@ -44,18 +47,40 @@ function findBestAssigneeMatch(
   return tokenMatch ? tokenMatch.accountId : "";
 }
 
+// Purely presentational — projects/users are fetched by JiraSyncButton
+// (imperatively, from the "Raise a ticket" click) and passed down here as
+// props, rather than this component fetching them itself on mount. See
+// JiraSyncButton for why: a mount effect gets double-invoked by React
+// StrictMode in development, which was silently doubling every Jira API
+// call this modal made.
 export default function RaiseATicketModal({
   actionItemId,
-  owner,
   blockerNote,
   jiraConnection,
+  projects,
+  projectsError,
+  connectionExpired,
+  selectedProjectKey,
+  onProjectChange,
+  users,
+  usersError,
+  assigneeAccountId,
+  onAssigneeChange,
   onClose,
   onCreated,
 }: {
   actionItemId: string;
-  owner: string | null;
   blockerNote: string | null;
   jiraConnection: JiraConnectionSummary | null;
+  projects: JiraProject[] | null;
+  projectsError: string | null;
+  connectionExpired: boolean;
+  selectedProjectKey: string;
+  onProjectChange: (projectKey: string) => void;
+  users: AssignableUser[] | null;
+  usersError: string | null;
+  assigneeAccountId: string;
+  onAssigneeChange: (accountId: string) => void;
   onClose: () => void;
   onCreated: (result: { jiraIssueKey: string; jiraUrl: string }) => void;
 }) {
@@ -64,98 +89,16 @@ export default function RaiseATicketModal({
   // separate boolean (architecture.md section 4).
   const isBlocker = !!blockerNote?.trim();
 
-  const [projects, setProjects] = useState<JiraProject[] | null>(null);
-  const [projectsError, setProjectsError] = useState<string | null>(null);
-  const [selectedProjectKey, setSelectedProjectKey] = useState(
-    () => jiraConnection?.projectKey ?? ""
-  );
-
-  const [users, setUsers] = useState<AssignableUser[] | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [connectionExpired, setConnectionExpired] = useState(false);
-
-  const [assigneeAccountId, setAssigneeAccountId] = useState("");
   const [priority, setPriority] = useState(isBlocker ? "High" : "Medium");
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!connected) return;
-    let cancelled = false;
-
-    async function loadProjects() {
-      try {
-        const res = await fetch("/api/integrations/jira/projects");
-        const data = await res.json();
-        if (cancelled) return;
-        if (!res.ok) {
-          setProjectsError(data.error || "Failed to load Jira projects");
-          setConnectionExpired(data.code === "CONNECTION_EXPIRED");
-          return;
-        }
-        setProjects(data.projects);
-        // Fall back to the first accessible project if there's no stored
-        // default yet — always overridable via the dropdown (PRD 6.4).
-        setSelectedProjectKey(
-          (prev: string) => prev || jiraConnection?.projectKey || data.projects[0]?.key || ""
-        );
-      } catch {
-        if (!cancelled) setProjectsError("Failed to load Jira projects");
-      }
-    }
-
-    loadProjects();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected]);
-
-  useEffect(() => {
-    if (!connected || !selectedProjectKey) return;
-    let cancelled = false;
-
-    async function loadUsers() {
-      try {
-        const res = await fetch(
-          `/api/integrations/jira/assignable-users?projectKey=${encodeURIComponent(selectedProjectKey)}`
-        );
-        const data = await res.json();
-        if (cancelled) return;
-        if (!res.ok) {
-          setLoadError(data.error || "Failed to load assignable users");
-          setConnectionExpired(data.code === "CONNECTION_EXPIRED");
-          return;
-        }
-        setUsers(data.users);
-        setAssigneeAccountId(findBestAssigneeMatch(owner, data.users));
-      } catch {
-        if (!cancelled) setLoadError("Failed to load assignable users");
-      }
-    }
-
-    loadUsers();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, selectedProjectKey]);
-
-  function handleProjectChange(projectKey: string) {
-    setSelectedProjectKey(projectKey);
-    // Clear the stale accountId immediately rather than leaving the old
-    // project's selection visible while the new list loads.
-    setUsers(null);
-    setAssigneeAccountId("");
-    setLoadError(null);
-    setConnectionExpired(false);
-  }
+  const [createConnectionExpired, setCreateConnectionExpired] = useState(false);
 
   async function handleCreate() {
     setCreating(true);
     setCreateError(null);
-    setConnectionExpired(false);
+    setCreateConnectionExpired(false);
     try {
       const res = await fetch("/api/jira/sync", {
         method: "POST",
@@ -170,7 +113,7 @@ export default function RaiseATicketModal({
       const data = await res.json();
       if (!res.ok) {
         setCreateError(data.error || "Failed to create ticket");
-        setConnectionExpired(data.code === "CONNECTION_EXPIRED");
+        setCreateConnectionExpired(data.code === "CONNECTION_EXPIRED");
         return;
       }
       onCreated({ jiraIssueKey: data.jiraIssueKey, jiraUrl: data.jiraUrl });
@@ -234,7 +177,7 @@ export default function RaiseATicketModal({
               <select
                 id="ticket-project"
                 value={selectedProjectKey}
-                onChange={(e) => handleProjectChange(e.target.value)}
+                onChange={(e) => onProjectChange(e.target.value)}
                 className="h-8 w-full max-w-xs rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
               >
                 {!selectedProjectKey && (
@@ -250,9 +193,9 @@ export default function RaiseATicketModal({
               </select>
             </div>
 
-            {loadError ? (
+            {usersError ? (
               <div className="flex items-center gap-2">
-                <p className="text-[13px] font-medium text-danger">{loadError}</p>
+                <p className="text-[13px] font-medium text-danger">{usersError}</p>
                 {connectionExpired && (
                   <a
                     href={connectHref}
@@ -278,7 +221,7 @@ export default function RaiseATicketModal({
                   <select
                     id="ticket-assignee"
                     value={assigneeAccountId}
-                    onChange={(e) => setAssigneeAccountId(e.target.value)}
+                    onChange={(e) => onAssigneeChange(e.target.value)}
                     className="h-8 w-56 rounded-[6px] border border-border bg-card px-2 text-[13px] text-text-primary outline-none focus:border-accent"
                   >
                     <option value="">Unassigned</option>
@@ -318,7 +261,7 @@ export default function RaiseATicketModal({
         {createError && (
           <div className="flex items-center gap-2">
             <p className="text-[12px] font-medium text-danger">{createError}</p>
-            {connectionExpired && (
+            {createConnectionExpired && (
               <a
                 href={connectHref}
                 className="text-[12px] font-medium text-accent underline"

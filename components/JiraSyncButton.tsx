@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import RaiseATicketModal from "./RaiseATicketModal";
+import RaiseATicketModal, {
+  findBestAssigneeMatch,
+  type AssignableUser,
+  type JiraProject,
+} from "./RaiseATicketModal";
 
 export interface JiraSyncState {
   status: "synced" | "failed";
@@ -42,6 +46,101 @@ export default function JiraSyncButton({
     () => searchParams.get("openTicketModal") === actionItemId
   );
 
+  // Projects/users for RaiseATicketModal are fetched from here, not from an
+  // effect inside that component — an event handler (this button's click)
+  // only ever runs once per real click, unlike a useEffect on mount, which
+  // React's StrictMode intentionally double-invokes in development. That
+  // was silently sending every Jira API call twice.
+  const [projects, setProjects] = useState<JiraProject[] | null>(null);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [connectionExpired, setConnectionExpired] = useState(false);
+  const [selectedProjectKey, setSelectedProjectKey] = useState(
+    () => jiraConnection?.projectKey ?? ""
+  );
+  const [users, setUsers] = useState<AssignableUser[] | null>(null);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [assigneeAccountId, setAssigneeAccountId] = useState("");
+
+  // Guards against an older in-flight assignable-users request clobbering
+  // a newer one if the project dropdown is changed again before the first
+  // response lands (previously handled by an effect-cleanup "cancelled"
+  // flag; this is the imperative equivalent).
+  const usersRequestId = useRef(0);
+
+  async function loadUsersForProject(projectKey: string) {
+    const requestId = ++usersRequestId.current;
+    try {
+      const res = await fetch(
+        `/api/integrations/jira/assignable-users?projectKey=${encodeURIComponent(projectKey)}`
+      );
+      const data = await res.json();
+      if (usersRequestId.current !== requestId) return;
+      if (!res.ok) {
+        setUsersError(data.error || "Failed to load assignable users");
+        setConnectionExpired(data.code === "CONNECTION_EXPIRED");
+        return;
+      }
+      setUsers(data.users);
+      setAssigneeAccountId(findBestAssigneeMatch(owner, data.users));
+    } catch {
+      if (usersRequestId.current !== requestId) return;
+      setUsersError("Failed to load assignable users");
+    }
+  }
+
+  async function loadProjectsAndUsers() {
+    setProjects(null);
+    setProjectsError(null);
+    setConnectionExpired(false);
+    try {
+      const res = await fetch("/api/integrations/jira/projects");
+      const data = await res.json();
+      if (!res.ok) {
+        setProjectsError(data.error || "Failed to load Jira projects");
+        setConnectionExpired(data.code === "CONNECTION_EXPIRED");
+        return;
+      }
+      setProjects(data.projects);
+      // Fall back to the first accessible project if there's no stored
+      // default yet — always overridable via the dropdown (PRD 6.4).
+      const defaultKey =
+        selectedProjectKey || jiraConnection?.projectKey || data.projects[0]?.key || "";
+      setSelectedProjectKey(defaultKey);
+      if (defaultKey) loadUsersForProject(defaultKey);
+    } catch {
+      setProjectsError("Failed to load Jira projects");
+    }
+  }
+
+  function handleProjectChange(projectKey: string) {
+    setSelectedProjectKey(projectKey);
+    // Clear the stale accountId immediately rather than leaving the old
+    // project's selection visible while the new list loads.
+    setUsers(null);
+    setAssigneeAccountId("");
+    setUsersError(null);
+    setConnectionExpired(false);
+    loadUsersForProject(projectKey);
+  }
+
+  function handleOpenModal() {
+    setModalOpen(true);
+    if (jiraConnection) loadProjectsAndUsers();
+  }
+
+  // Covers the OAuth-reopen case above, where the modal opens without a
+  // click to hang the fetch off of. A ref guard makes this idempotent
+  // under StrictMode's double-invoke — unlike a plain mount effect, which
+  // is exactly what caused the double-fetch this whole refactor fixes.
+  const didAutoLoad = useRef(false);
+  useEffect(() => {
+    if (didAutoLoad.current) return;
+    didAutoLoad.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate: no click exists for this reopen path, see comment above
+    if (modalOpen && jiraConnection) loadProjectsAndUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Strip the query param once consumed, so a page refresh doesn't reopen it.
   useEffect(() => {
     if (searchParams.get("openTicketModal") === actionItemId) {
@@ -68,7 +167,7 @@ export default function JiraSyncButton({
         ) : (
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={handleOpenModal}
             className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary"
           >
             Raise a ticket
@@ -85,9 +184,17 @@ export default function JiraSyncButton({
       {modalOpen && (
         <RaiseATicketModal
           actionItemId={actionItemId}
-          owner={owner}
           blockerNote={blockerNote}
           jiraConnection={jiraConnection}
+          projects={projects}
+          projectsError={projectsError}
+          connectionExpired={connectionExpired}
+          selectedProjectKey={selectedProjectKey}
+          onProjectChange={handleProjectChange}
+          users={users}
+          usersError={usersError}
+          assigneeAccountId={assigneeAccountId}
+          onAssigneeChange={setAssigneeAccountId}
           onClose={() => setModalOpen(false)}
           onCreated={(result) => {
             setSync({

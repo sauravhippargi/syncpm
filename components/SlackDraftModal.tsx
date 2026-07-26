@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Lives in ActionItemRow (Action Items tab), per-item like JiraSyncButton —
 // greyed out with no owner; one editable AI-drafted message + Copy
@@ -14,13 +14,43 @@ export default function SlackDraftModal({
   owner: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [text, setText] = useState("");
   const disabled = !owner?.trim();
+
+  // Fired directly from the click, not a mount effect — a click handler
+  // only ever runs once per real click, unlike a useEffect, which React's
+  // StrictMode intentionally double-invokes in development. That was
+  // silently sending every Gemini draft request twice.
+  async function handleOpen() {
+    setOpen(true);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/slack/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actionItemId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to draft the message");
+        return;
+      }
+      setText(data.message);
+    } catch {
+      setError("Failed to draft the message — check your connection");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         disabled={disabled}
         title={disabled ? "Assign an owner to draft a message for this item" : undefined}
         className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary disabled:cursor-not-allowed disabled:opacity-40"
@@ -29,57 +59,32 @@ export default function SlackDraftModal({
       </button>
 
       {open && (
-        <DraftModalBody actionItemId={actionItemId} onClose={() => setOpen(false)} />
+        <DraftModalBody
+          loading={loading}
+          error={error}
+          text={text}
+          onTextChange={setText}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );
 }
 
 function DraftModalBody({
-  actionItemId,
+  loading,
+  error,
+  text,
+  onTextChange,
   onClose,
 }: {
-  actionItemId: string;
+  loading: boolean;
+  error: string | null;
+  text: string;
+  onTextChange: (value: string) => void;
   onClose: () => void;
 }) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function draft() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/slack/draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actionItemId }),
-        });
-        const data = await res.json();
-        if (cancelled) return;
-        if (!res.ok) {
-          setError(data.error || "Failed to draft the message");
-          return;
-        }
-        setText(data.message);
-      } catch {
-        if (!cancelled) {
-          setError("Failed to draft the message — check your connection");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    draft();
-    return () => {
-      cancelled = true;
-    };
-  }, [actionItemId]);
 
   async function handleCopy() {
     try {
@@ -116,7 +121,7 @@ function DraftModalBody({
         ) : (
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => onTextChange(e.target.value)}
             rows={6}
             className="resize-y rounded-[6px] border border-border bg-page p-2.5 text-[13px] leading-[1.5] text-text-primary outline-none focus:border-accent"
           />
