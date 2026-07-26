@@ -31,7 +31,13 @@ function sleep(ms: number) {
 // 429 backoff per rules.md section 2: retry up to 3x (1s -> 2s -> 4s).
 const BACKOFF_MS = [1000, 2000, 4000];
 
-async function callGemini(prompt: string): Promise<string> {
+// generationConfig is optional — omit it entirely for plain-text output
+// (e.g. Slack draft messages); pass responseMimeType/responseSchema for
+// structured JSON output (e.g. extraction).
+async function callGemini(
+  prompt: string,
+  generationConfig?: Record<string, unknown>
+): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new GeminiRequestError("GEMINI_API_KEY is not configured");
@@ -45,10 +51,7 @@ async function callGemini(prompt: string): Promise<string> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: ACTION_ITEM_RESPONSE_SCHEMA,
-          },
+          ...(generationConfig ? { generationConfig } : {}),
         }),
       });
     } catch (err) {
@@ -88,7 +91,10 @@ export async function extractActionItems(
   transcriptText: string
 ): Promise<ExtractedActionItem[]> {
   const prompt = buildExtractionPrompt(transcriptText);
-  const rawOutput = await callGemini(prompt);
+  const rawOutput = await callGemini(prompt, {
+    responseMimeType: "application/json",
+    responseSchema: ACTION_ITEM_RESPONSE_SCHEMA,
+  });
 
   let parsed: unknown;
   try {
@@ -106,4 +112,11 @@ export async function extractActionItems(
   }
 
   return items;
+}
+
+// Plain-text output (no JSON schema) — used for Slack draft messages
+// (prd.md 6.5), which are freeform prose, not structured data.
+export async function draftSlackMessage(prompt: string): Promise<string> {
+  const text = await callGemini(prompt);
+  return text.trim();
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const MESSAGES = [
+const DEFAULT_MESSAGES = [
   "Reading your transcript…",
   "Identifying speakers and owners…",
   "Extracting action items…",
@@ -12,18 +12,25 @@ const MESSAGES = [
 
 const MESSAGE_INTERVAL_MS = 1600;
 
-export default function ExtractionLoader() {
+// Reused wherever a Gemini call is in flight (extraction on Upload, Slack
+// drafting on Review & Edit) — same spinner/staged-message pattern, just a
+// different message sequence passed in per context.
+export default function ExtractionLoader({
+  messages = DEFAULT_MESSAGES,
+}: {
+  messages?: string[];
+}) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   useEffect(() => {
     // Wraps via modulo rather than stopping at the last message, so a
-    // slower-than-usual extraction just loops the sequence instead of
-    // stalling on "Almost done…" (rules.md — never leave the UI stuck).
+    // slower-than-usual call just loops the sequence instead of stalling on
+    // "Almost done…" (rules.md — never leave the UI stuck).
     const timer = setInterval(() => {
-      setMessageIndex((i) => (i + 1) % MESSAGES.length);
+      setMessageIndex((i) => (i + 1) % messages.length);
     }, MESSAGE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, []);
+  }, [messages]);
 
   return (
     <div className="flex flex-col items-center gap-4 rounded-[10px] border border-border bg-card px-6 py-10 shadow-card text-center">
@@ -47,7 +54,7 @@ export default function ExtractionLoader() {
         key={messageIndex}
         className="animate-[fade-in_0.3s_ease-in-out] text-[14px] font-medium leading-[1.4] text-text-primary"
       >
-        {MESSAGES[messageIndex]}
+        {messages[messageIndex]}
       </p>
 
       <p className="text-[11px] leading-[1.3] text-text-secondary">
