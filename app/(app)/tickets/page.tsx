@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import ConnectorPicker from "@/components/ConnectorPicker";
 import ProjectSelector from "@/components/ProjectSelector";
 import JiraDisconnectButton from "@/components/JiraDisconnectButton";
+import LocalDateTime from "@/components/LocalDateTime";
 
 const JIRA_ERROR_MESSAGES: Record<string, string> = {
   access_denied: "You declined to connect Jira — connect again when ready.",
@@ -97,7 +98,7 @@ export default async function TicketsPage({
                         {log.actionItem.description || "Untitled action item"}
                       </span>
                       <span className="text-[11px] text-text-secondary">
-                        {log.syncedAt.toLocaleString()}
+                        <LocalDateTime iso={log.syncedAt.toISOString()} />
                       </span>
                     </div>
                     {log.status === "synced" && log.jiraUrl ? (

@@ -72,7 +72,7 @@ export default async function DashboardPage() {
     actionItemCount: t.actionItems.length,
     blockerCount: t.actionItems.filter((item) => isBlockerNote(item.blockerNote))
       .length,
-    uploadedAtLabel: t.uploadedAt.toLocaleString(),
+    uploadedAt: t.uploadedAt.toISOString(),
   }));
 
   const upcomingDeadlineRows = upcomingDeadlines.map((item) => {

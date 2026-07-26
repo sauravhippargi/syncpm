@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ActionItemCard, { type ActionItem } from "./ActionItemCard";
+import LocalDateTime from "./LocalDateTime";
 
 export default function ReviewScreen({
   transcriptId,
@@ -11,7 +12,7 @@ export default function ReviewScreen({
   focusItemId,
 }: {
   transcriptId: string;
-  uploadedAt: string;
+  uploadedAt: string; // ISO — formatted client-side via LocalDateTime, not pre-formatted server-side
   initialItems: ActionItem[];
   focusItemId?: string;
 }) {
@@ -145,7 +146,7 @@ export default function ReviewScreen({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] leading-[1.4] text-text-secondary">
-          Uploaded {uploadedAt} — review, edit, or add action items below.
+          Uploaded <LocalDateTime iso={uploadedAt} /> — review, edit, or add action items below.
         </p>
         <button
           type="button"

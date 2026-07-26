@@ -11,6 +11,7 @@ import {
 import {
   ALLOWED_EXTENSIONS,
   MAX_TRANSCRIPT_BYTES,
+  defaultTranscriptTitle,
   extensionFromFilename,
   isAllowedExtension,
 } from "@/lib/transcript";
@@ -137,10 +138,16 @@ export default function TranscriptUploader() {
     setSubmitting(true);
 
     try {
+      // Computed here, not on the server — this is meant to read as "when
+      // the user uploaded this" from their own perspective, so it has to
+      // use the browser's local clock/timezone, not whatever timezone the
+      // server process happens to be running in.
+      const finalTitle = title.trim() || defaultTranscriptTitle(new Date());
+
       const res = await fetch("/api/transcripts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim() || undefined, rawText, fileType }),
+        body: JSON.stringify({ title: finalTitle, rawText, fileType }),
       });
       const data = await res.json();
 

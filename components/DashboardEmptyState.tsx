@@ -31,21 +31,24 @@ const SAMPLE_RECENT_TRANSCRIPTS = [
     title: "Weekly Cross-Functional Sync",
     actionItemCount: 4,
     blockerCount: 1,
-    uploadedAtLabel: "Jul 24, 2026, 10:15 AM",
+    // No timezone offset — parsed as local time, so LocalDateTime reproduces
+    // these exact wall-clock numbers for every viewer, not just whoever's in
+    // this server's timezone (this is decorative sample content only).
+    uploadedAt: "2026-07-24T10:15:00",
   },
   {
     id: "sample-2",
     title: "Q3 Roadmap Review",
     actionItemCount: 6,
     blockerCount: 0,
-    uploadedAtLabel: "Jul 22, 2026, 3:30 PM",
+    uploadedAt: "2026-07-22T15:30:00",
   },
   {
     id: "sample-3",
     title: "Sprint Planning",
     actionItemCount: 3,
     blockerCount: 1,
-    uploadedAtLabel: "Jul 21, 2026, 9:00 AM",
+    uploadedAt: "2026-07-21T09:00:00",
   },
 ];
 

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import DeleteTranscriptButton from "@/components/DeleteTranscriptButton";
 import FathomBackfillButton from "@/components/FathomBackfillButton";
+import LocalDateTime from "@/components/LocalDateTime";
 import { isBlockerNote } from "@/lib/action-items";
 
 export default async function TranscriptHistoryPage() {
@@ -74,7 +75,7 @@ export default async function TranscriptHistoryPage() {
                       </span>
                     </div>
                     <span className="text-[11px] text-text-secondary">
-                      Uploaded {transcript.uploadedAt.toLocaleString()}
+                      Uploaded <LocalDateTime iso={transcript.uploadedAt.toISOString()} />
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2 text-[12px] text-text-secondary">

@@ -49,7 +49,7 @@ export default async function ReviewPage({
       </div>
       <ReviewScreen
         transcriptId={transcript.id}
-        uploadedAt={transcript.uploadedAt.toLocaleString()}
+        uploadedAt={transcript.uploadedAt.toISOString()}
         initialItems={items}
         focusItemId={focusItem}
       />

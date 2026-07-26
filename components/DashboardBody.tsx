@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LocalDateTime from "./LocalDateTime";
 
 export interface DashboardStats {
   openActionItems: number;
@@ -12,7 +13,7 @@ export interface RecentTranscriptRow {
   title: string;
   actionItemCount: number;
   blockerCount: number;
-  uploadedAtLabel: string;
+  uploadedAt: string; // ISO — formatted client-side via LocalDateTime, not pre-formatted server-side
 }
 
 export interface UpcomingDeadlineRow {
@@ -76,7 +77,9 @@ export default function DashboardBody({
                         {t.blockerCount} blocker{t.blockerCount === 1 ? "" : "s"}
                       </span>
                     )}
-                    <span>· {t.uploadedAtLabel}</span>
+                    <span>
+                      · <LocalDateTime iso={t.uploadedAt} />
+                    </span>
                   </span>
                 </Link>
               </li>
