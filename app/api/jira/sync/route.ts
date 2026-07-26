@@ -45,7 +45,12 @@ export async function POST(request: NextRequest) {
   // through the parent transcript (architecture.md section 4).
   const actionItem = await prisma.actionItem.findFirst({
     where: { id: body.actionItemId, transcript: { userId: session.user.id } },
-    include: { transcript: true },
+    include: {
+      transcript: true,
+      // Only need to know whether a successful sync already exists, not
+      // its full history — one row is enough.
+      jiraSyncLogs: { where: { status: "synced" }, take: 1 },
+    },
   });
 
   if (!actionItem) {
@@ -62,6 +67,26 @@ export async function POST(request: NextRequest) {
         code: "NOT_APPROVED",
       },
       { status: 400 }
+    );
+  }
+
+  // Server-side guard against duplicate issue creation — the UI already
+  // hides the "Raise a ticket" button once an item is synced (JiraSyncButton
+  // shows only the "Synced — KEY" link then), but that alone doesn't stop a
+  // second sync from creating a second, unlinked Jira issue if this route
+  // is ever hit directly or a client-side regression reintroduces the
+  // button. createIssue() itself has no idea an issue already exists, so
+  // this has to be checked here before calling it.
+  const existingSync = actionItem.jiraSyncLogs[0];
+  if (existingSync) {
+    return NextResponse.json(
+      {
+        error: "This item is already synced to Jira",
+        code: "ALREADY_SYNCED",
+        jiraIssueKey: existingSync.jiraIssueKey,
+        jiraUrl: existingSync.jiraUrl,
+      },
+      { status: 409 }
     );
   }
 
