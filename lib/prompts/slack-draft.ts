@@ -31,5 +31,6 @@ Rules:
 - Mention the due date naturally if present
 - If a blocker is noted, mention it so the recipient has context
 - Do not name or reference any specific chat tool or platform (e.g. Slack, Teams, email) — this message could be sent through any of them
+- Do not include any links or URLs, or mention a ticket link at all — if this item has a real synced ticket, the application appends that line separately using the actual URL, never one you generate
 - Output only the message text itself — no subject line, no "Here's a draft:" preamble, no surrounding quotation marks`;
 }
