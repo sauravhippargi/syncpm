@@ -32,7 +32,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(failureUrl("state_mismatch"));
   }
 
-  const redirectUri = `${new URL(request.url).origin}/api/integrations/jira/callback`;
+  // Must match the redirect_uri sent to /authorize exactly (see
+  // app/api/integrations/jira/connect/route.ts) — same NEXT_PUBLIC_APP_URL
+  // fix, not the incoming request's origin.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not configured");
+    return NextResponse.redirect(failureUrl("missing_app_url"));
+  }
+  const redirectUri = `${appUrl}/api/integrations/jira/callback`;
 
   try {
     const tokens = await exchangeCodeForTokens(code, redirectUri);

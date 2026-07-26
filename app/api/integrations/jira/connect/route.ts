@@ -15,7 +15,21 @@ export async function GET(request: NextRequest) {
   // standalone Tickets tab.
   const actionItemId = request.nextUrl.searchParams.get("actionItemId");
   const state = encodeOAuthState(actionItemId);
-  const redirectUri = `${new URL(request.url).origin}/api/integrations/jira/callback`;
+  // Must exactly match a redirect URL registered in the Atlassian Developer
+  // Console, so this has to be the app's real public origin — never derived
+  // from the incoming request (new URL(request.url).origin), which reflects
+  // however the request actually arrived (direct, behind a tunnel, behind a
+  // proxy) and proved unreliable for that reason (same issue as the Fathom
+  // webhook callback URL).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not configured");
+    return NextResponse.json(
+      { error: "Server misconfiguration — app URL is not set", code: "MISSING_APP_URL" },
+      { status: 500 }
+    );
+  }
+  const redirectUri = `${appUrl}/api/integrations/jira/callback`;
   const authorizeUrl = buildAuthorizeUrl(redirectUri, state);
 
   const response = NextResponse.redirect(authorizeUrl);
