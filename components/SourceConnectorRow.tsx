@@ -35,7 +35,7 @@ export default function SourceConnectorRow({
   }, [activeMessage]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex w-full max-w-xl flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
