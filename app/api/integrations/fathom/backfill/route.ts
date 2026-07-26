@@ -115,7 +115,7 @@ export async function POST() {
     }
     console.error("Fathom backfill sync failed", err);
     return NextResponse.json(
-      { error: "Failed to sync Fathom meetings — try again", code: "UNKNOWN_ERROR" },
+      { error: "Failed to sync meetings — try again", code: "UNKNOWN_ERROR" },
       { status: 500 }
     );
   }

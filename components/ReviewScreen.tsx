@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ActionItemCard, { type ActionItem } from "./ActionItemCard";
 
 export default function ReviewScreen({
@@ -12,6 +13,7 @@ export default function ReviewScreen({
   uploadedAt: string;
   initialItems: ActionItem[];
 }) {
+  const router = useRouter();
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   // Checked by default (prd.md 6.3) — extraction is usually right, so
   // unchecking specific items is less friction than approving each one.
@@ -117,6 +119,10 @@ export default function ReviewScreen({
           ? "Saved all items"
           : `Saved ${checkedItems.length} item${checkedItems.length === 1 ? "" : "s"}`
       );
+      // Approved items live on the Action Items tab now, not here — this
+      // screen is purely extraction triage (prd.md 6.3), so once the save
+      // request actually succeeds, that's where the user should land.
+      router.push("/action-items");
     } catch {
       setSaveError("Failed to save — check your connection");
     } finally {

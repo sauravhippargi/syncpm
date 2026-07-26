@@ -23,7 +23,7 @@ export default function FathomBackfillButton() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to sync Fathom meetings");
+        setMessage(data.error || "Failed to sync meetings");
         return;
       }
       const count = data.imported ?? 0;
@@ -34,7 +34,7 @@ export default function FathomBackfillButton() {
       );
       if (count > 0) router.refresh();
     } catch {
-      setMessage("Failed to sync Fathom meetings — check your connection");
+      setMessage("Failed to sync meetings — check your connection");
     } finally {
       setSyncing(false);
     }
@@ -48,7 +48,7 @@ export default function FathomBackfillButton() {
         disabled={syncing}
         className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary disabled:opacity-50"
       >
-        {syncing ? "Syncing…" : "Sync recent Fathom meetings"}
+        {syncing ? "Syncing…" : "Sync recent meetings"}
       </button>
       {message && (
         <span className="text-[12px] text-text-secondary">{message}</span>
