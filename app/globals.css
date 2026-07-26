@@ -30,6 +30,10 @@
   --color-warning-tint: #fff6e5;
   --color-warning-text: #b25e00;
   --color-success: #00a67e;
+  /* Atlassian's actual Jira brand blue — used only for the "Tickets raised"
+     stat card, kept distinct from Completed's success green so the two
+     don't get confused at a glance (design.md). */
+  --color-jira-blue: #0052cc;
   /* success-tint/danger-tint aren't given explicit hex values in design.md
      (only warning-bg/warning-text are spelled out) — derived as pale tints
      at the same lightness/saturation as warning-tint, to keep the existing

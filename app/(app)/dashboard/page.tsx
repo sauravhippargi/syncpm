@@ -86,7 +86,7 @@ export default async function DashboardPage() {
           value={doneApprovedItems.length}
           tone="success"
         />
-        <StatTile label="Tickets raised" value={syncedCount} tone="success" />
+        <StatTile label="Tickets raised" value={syncedCount} tone="jira" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
@@ -182,7 +182,7 @@ function StatTile({
 }: {
   label: string;
   value: number;
-  tone?: "warning" | "success";
+  tone?: "warning" | "success" | "jira";
   href?: string;
 }) {
   const valueColor =
@@ -190,13 +190,17 @@ function StatTile({
       ? "text-warning"
       : tone === "success"
         ? "text-success"
-        : "text-accent";
+        : tone === "jira"
+          ? "text-jira-blue"
+          : "text-accent";
   const dotColor =
     tone === "warning"
       ? "bg-warning"
       : tone === "success"
         ? "bg-success"
-        : "bg-accent";
+        : tone === "jira"
+          ? "bg-jira-blue"
+          : "bg-accent";
 
   const content = (
     <>
