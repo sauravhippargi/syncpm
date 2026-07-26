@@ -61,7 +61,7 @@ export default function ActionItemRow({
             )}
             <Link
               href={`/review/${item.transcriptId}`}
-              className="font-medium text-accent"
+              className="text-text-secondary hover:underline"
             >
               {item.transcriptTitle || "Untitled meeting"}
             </Link>
@@ -70,7 +70,7 @@ export default function ActionItemRow({
 
         <div className="flex shrink-0 items-center gap-1">
           <Link
-            href={`/review/${item.transcriptId}`}
+            href={`/review/${item.transcriptId}?focusItem=${item.id}`}
             aria-label="Edit"
             className="flex h-8 w-8 items-center justify-center rounded-[6px] text-text-secondary transition-colors hover:bg-page"
           >

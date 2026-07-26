@@ -7,10 +7,13 @@ import type { ActionItem } from "@/components/ActionItemCard";
 
 export default async function ReviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ transcriptId: string }>;
+  searchParams: Promise<{ focusItem?: string }>;
 }) {
   const { transcriptId } = await params;
+  const { focusItem } = await searchParams;
 
   // proxy.ts already redirects unauthenticated requests for /review, but data
   // access must never rely on that alone (rules.md section 3) — check again here.
@@ -48,6 +51,7 @@ export default async function ReviewPage({
         transcriptId={transcript.id}
         uploadedAt={transcript.uploadedAt.toLocaleString()}
         initialItems={items}
+        focusItemId={focusItem}
       />
     </main>
   );

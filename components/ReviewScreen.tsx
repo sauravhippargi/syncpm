@@ -8,17 +8,26 @@ export default function ReviewScreen({
   transcriptId,
   uploadedAt,
   initialItems,
+  focusItemId,
 }: {
   transcriptId: string;
   uploadedAt: string;
   initialItems: ActionItem[];
+  focusItemId?: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState<ActionItem[]>(initialItems);
   // Checked by default (prd.md 6.3) — extraction is usually right, so
   // unchecking specific items is less friction than approving each one.
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    () => new Set(initialItems.map((item) => item.id))
+  // Exception: arriving via a targeted single-item edit (the Action Items
+  // tab's edit pencil, which links here with ?focusItem=<id>) pre-checks
+  // only that one item — every other item on the transcript starts
+  // unchecked, regardless of its own approval state, since this is a
+  // targeted edit, not a re-review of the whole transcript (prd.md 6.3a).
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() =>
+    focusItemId
+      ? new Set([focusItemId])
+      : new Set(initialItems.map((item) => item.id))
   );
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
