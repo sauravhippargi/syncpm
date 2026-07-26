@@ -110,7 +110,7 @@ function DraftModalBody({
             Draft message
           </h2>
           <p className="text-[13px] leading-[1.4] text-text-secondary">
-            An AI-drafted Slack message for this action item — edit before sending.
+            An AI-drafted message for this action item — edit before sending.
           </p>
         </div>
 
