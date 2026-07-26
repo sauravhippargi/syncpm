@@ -5,7 +5,12 @@ import {
   type ExtractedActionItem,
 } from "./prompts/extraction";
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+// "gemini-2.5-flash-lite" 404s for this project ("no longer available to
+// new users"), and pinned older Lite versions (e.g. 2.0) return a hard
+// free-tier limit of 0 for this project — the rolling alias avoids pinning
+// to a specific version that could get deprecated the same way. RPD quota
+// is tracked per-model, so this is a separate bucket from gemini-2.5-flash.
+const GEMINI_MODEL = "gemini-flash-lite-latest";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Thrown when the Gemini request itself fails (network error, non-429 error
