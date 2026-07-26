@@ -20,6 +20,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Fathom needs a callback URL it can reach from the outside, so this must
+  // be the app's real public origin — never derived from the incoming
+  // request (new URL(request.url).origin), which reflects however the
+  // request actually arrived (direct, behind a tunnel, behind a proxy) and
+  // proved unreliable for that reason.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+  if (!appUrl) {
+    console.error("NEXT_PUBLIC_APP_URL is not configured");
+    return NextResponse.json(
+      { error: "Server misconfiguration — app URL is not set", code: "MISSING_APP_URL" },
+      { status: 500 }
+    );
+  }
+
   let body: ConnectBody;
   try {
     body = await request.json();
@@ -87,7 +101,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const callbackUrl = `${new URL(request.url).origin}/api/integrations/fathom/webhook/${connection.id}`;
+  const callbackUrl = `${appUrl}/api/integrations/fathom/webhook/${connection.id}`;
 
   try {
     const webhook = await registerWebhook(apiKey, callbackUrl);
