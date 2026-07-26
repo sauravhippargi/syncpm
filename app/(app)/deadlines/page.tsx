@@ -13,6 +13,7 @@ export default async function DeadlinesPage() {
   const items = await prisma.actionItem.findMany({
     where: {
       status: "open",
+      isApproved: true,
       dueDate: { not: null },
       transcript: { userId: session.user.id },
     },

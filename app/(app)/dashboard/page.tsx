@@ -36,14 +36,14 @@ export default async function DashboardPage() {
   }
 
   const allItems = transcripts.flatMap((t) => t.actionItems);
-  const openItems = allItems.filter((item) => item.status === "open");
 
-  // The four stat cards must mirror the Action Items tab's own query exactly
-  // (isApproved: true, prd.md 6.3a) so a KPI number never disagrees with what
-  // that tab actually lists. Recent Transcripts' pill counts (allItems) and
-  // the Upcoming Deadlines preview (openItems) intentionally stay unscoped,
-  // matching the standalone Deadlines tab's own query, which also doesn't
-  // filter by isApproved.
+  // The four stat cards, and the Upcoming Deadlines preview below, must all
+  // mirror the Action Items tab's own query (isApproved: true, prd.md 6.3a/
+  // 6.6/6.8) so none of them ever disagree with what that tab actually
+  // lists — an item still sitting unreviewed on Review & Edit shouldn't
+  // count toward, or show up in, any of these. Recent Transcripts' pill
+  // counts (allItems) intentionally stay unscoped — those are raw
+  // extraction counts for the transcript, not approval-gated data.
   const approvedItems = allItems.filter((item) => item.isApproved);
   const openApprovedItems = approvedItems.filter((item) => item.status === "open");
   const approvedBlockers = openApprovedItems.filter((item) => isBlockerNote(item.blockerNote));
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
 
   const recentTranscripts = transcripts.slice(0, 5);
 
-  const upcomingDeadlines = openItems
+  const upcomingDeadlines = openApprovedItems
     .filter((item) => item.dueDate)
     .sort((a, b) => a.dueDate!.getTime() - b.dueDate!.getTime())
     .slice(0, 10);
