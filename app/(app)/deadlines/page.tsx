@@ -82,7 +82,7 @@ export default async function DeadlinesPage() {
                     )}
                     <Link
                       href={`/review/${item.transcriptId}`}
-                      className="ml-auto font-medium text-accent"
+                      className="ml-auto text-text-secondary hover:underline"
                     >
                       {item.transcript.title || "Untitled meeting"}
                     </Link>
