@@ -28,7 +28,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
   return (
     <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
       <Link href="/dashboard" className="flex items-center">
-        <Image src="/logo-full.png" alt="SyncPM" width={96} height={96} />
+        <Image src="/logo-full.png" alt="SyncPM" width={96} height={96} unoptimized />
       </Link>
 
       <button
@@ -49,7 +49,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
         >
           <div className="flex h-full w-72 max-w-[80vw] flex-col border-r border-border bg-card px-4 py-6 shadow-card">
             <div className="mb-6 flex items-center justify-between px-2">
-              <Image src="/logo-full.png" alt="SyncPM" width={112} height={112} />
+              <Image src="/logo-full.png" alt="SyncPM" width={112} height={112} unoptimized />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
