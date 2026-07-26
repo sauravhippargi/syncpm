@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import JiraSyncButton, {
   type JiraConnectionSummary,
@@ -28,15 +27,20 @@ export interface ActionItemRowData {
 // item across all transcripts. This is the only place ticket creation
 // happens now; "edit" just links back to the item's source transcript's
 // Review & Edit screen, since that's the only place fields are editable.
+// Status changes and deletes are reported up to ActionItemsList via props,
+// rather than this component refreshing the page itself — that's what lets
+// a row move between the Open/Done sections instantly.
 export default function ActionItemRow({
   item,
   jiraConnection,
+  onStatusChange,
+  onDeleted,
 }: {
   item: ActionItemRowData;
   jiraConnection: JiraConnectionSummary | null;
+  onStatusChange: (status: string) => void;
+  onDeleted: () => void;
 }) {
-  const router = useRouter();
-
   return (
     <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-4">
@@ -80,13 +84,17 @@ export default function ActionItemRow({
           <DeleteActionItemButton
             actionItemId={item.id}
             description={item.description}
-            onDeleted={() => router.refresh()}
+            onDeleted={onDeleted}
           />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <ActionItemStatusSelect actionItemId={item.id} status={item.status} />
+        <ActionItemStatusSelect
+          actionItemId={item.id}
+          status={item.status}
+          onStatusChange={onStatusChange}
+        />
         <JiraSyncButton
           actionItemId={item.id}
           owner={item.owner}

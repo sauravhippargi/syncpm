@@ -1,21 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Action Items tab only (prd.md 6.3a) — the only place status is
 // visible/editable after an item leaves Review & Edit's ActionItemCard.
-// Saves immediately on change (no page-level "Save all" here, unlike
-// Review & Edit), and refreshes so the Dashboard's "Completed action
-// items" count stays in sync the next time it's loaded.
+// Saves immediately on change, then reports the new status up via
+// onStatusChange so ActionItemsList can move the row between the Open/Done
+// sections instantly — no page refresh, no server round-trip beyond the
+// PATCH itself.
 export default function ActionItemStatusSelect({
   actionItemId,
   status,
+  onStatusChange,
 }: {
   actionItemId: string;
   status: string;
+  onStatusChange: (status: string) => void;
 }) {
-  const router = useRouter();
   const [value, setValue] = useState(status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export default function ActionItemStatusSelect({
         setValue(previous);
         return;
       }
-      router.refresh();
+      onStatusChange(next);
     } catch {
       setError("Failed to update status — check your connection");
       setValue(previous);
