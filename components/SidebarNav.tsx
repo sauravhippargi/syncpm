@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarClock,
   History,
+  Info,
   LayoutDashboard,
   ListChecks,
   Ticket,
   Upload,
   type LucideIcon,
 } from "lucide-react";
+import HowToUseModal from "./HowToUseModal";
 
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +26,7 @@ const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
 
 export default function SidebarNav() {
   const pathname = usePathname();
+  const [howToUseOpen, setHowToUseOpen] = useState(false);
 
   return (
     <nav className="flex flex-col gap-1">
@@ -48,6 +52,21 @@ export default function SidebarNav() {
           </Link>
         );
       })}
+
+      {/* Not a route — opens a static reference modal, so it never shows
+          an active state like the links above (prd.md sidebar spec). */}
+      <button
+        type="button"
+        onClick={() => setHowToUseOpen(true)}
+        className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px] font-medium text-text-secondary transition-colors hover:bg-page"
+      >
+        <Info size={16} className="shrink-0" />
+        <span>How to use</span>
+      </button>
+
+      {howToUseOpen && (
+        <HowToUseModal onClose={() => setHowToUseOpen(false)} />
+      )}
     </nav>
   );
 }
