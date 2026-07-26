@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isBlockerNote } from "@/lib/action-items";
 import DashboardEmptyState from "@/components/DashboardEmptyState";
+import DashboardBody from "@/components/DashboardBody";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -66,166 +66,40 @@ export default async function DashboardPage() {
   // viewer's local timezone (e.g. UTC-7 rendering "2026-07-25" as "7/24").
   const todayUTC = new Date().toISOString().slice(0, 10);
 
+  const recentTranscriptRows = recentTranscripts.map((t) => ({
+    id: t.id,
+    title: t.title || "Untitled meeting",
+    actionItemCount: t.actionItems.length,
+    blockerCount: t.actionItems.filter((item) => isBlockerNote(item.blockerNote))
+      .length,
+    uploadedAtLabel: t.uploadedAt.toLocaleString(),
+  }));
+
+  const upcomingDeadlineRows = upcomingDeadlines.map((item) => {
+    const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
+    return {
+      id: item.id,
+      description: item.description || "Untitled action item",
+      dueDateLabel:
+        item.dueDate?.toLocaleDateString(undefined, { timeZone: "UTC" }) ?? "",
+      overdue: dueDateUTC !== undefined && dueDateUTC < todayUTC,
+    };
+  });
+
   return (
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       {header}
 
-      <div className="grid grid-cols-4 gap-3">
-        <StatTile
-          label="Open action items"
-          value={openApprovedItems.length}
-          href="/action-items"
-        />
-        <StatTile
-          label="Blockers"
-          value={approvedBlockers.length}
-          tone="warning"
-        />
-        <StatTile
-          label="Completed action items"
-          value={doneApprovedItems.length}
-          tone="success"
-        />
-        <StatTile label="Tickets raised" value={syncedCount} tone="jira" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
-        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-          <p className="text-[14px] font-semibold text-text-primary">
-            Recent transcripts
-          </p>
-          <ul className="mt-3 flex flex-col divide-y divide-row-divider">
-            {recentTranscripts.map((t) => {
-              const blockerCount = t.actionItems.filter((item) =>
-                isBlockerNote(item.blockerNote)
-              ).length;
-              return (
-                <li key={t.id} className="py-3 first:pt-0 last:pb-0">
-                  <Link href={`/review/${t.id}`} className="group flex flex-col">
-                    <span className="mb-1.5 truncate text-[14.5px] font-semibold text-text-primary group-hover:text-accent">
-                      {t.title || "Untitled meeting"}
-                    </span>
-                    <span className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">
-                      <span className="inline-flex items-center rounded-full bg-neutral-pill-bg px-2 py-0.5 text-[11.5px] font-semibold text-neutral-pill-text">
-                        {t.actionItems.length} action item
-                        {t.actionItems.length === 1 ? "" : "s"}
-                      </span>
-                      {blockerCount > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-warning-tint px-2 py-0.5 text-[11.5px] font-semibold text-warning-text">
-                          {blockerCount} blocker{blockerCount === 1 ? "" : "s"}
-                        </span>
-                      )}
-                      <span>· {t.uploadedAt.toLocaleString()}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <p className="text-[14px] font-semibold text-text-primary">
-              Upcoming deadlines
-            </p>
-            <Link
-              href="/deadlines"
-              className="text-[12px] font-medium text-accent"
-            >
-              View all
-            </Link>
-          </div>
-
-          {upcomingDeadlines.length === 0 ? (
-            <p className="mt-3 text-[13px] text-text-secondary">
-              No open items with a due date.
-            </p>
-          ) : (
-            <ul className="mt-3 flex flex-col divide-y divide-row-divider">
-              {upcomingDeadlines.map((item) => {
-                const dueDateUTC = item.dueDate?.toISOString().slice(0, 10);
-                const overdue = dueDateUTC !== undefined && dueDateUTC < todayUTC;
-                return (
-                  <li
-                    key={item.id}
-                    className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <span className="text-[14.5px] font-normal leading-[1.4] text-text-primary">
-                      {item.description || "Untitled action item"}
-                    </span>
-                    <span
-                      className={`shrink-0 text-[12.5px] ${
-                        overdue ? "font-medium text-danger" : "text-text-secondary"
-                      }`}
-                    >
-                      {item.dueDate?.toLocaleDateString(undefined, {
-                        timeZone: "UTC",
-                      })}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </div>
+      <DashboardBody
+        stats={{
+          openActionItems: openApprovedItems.length,
+          blockers: approvedBlockers.length,
+          completedActionItems: doneApprovedItems.length,
+          ticketsRaised: syncedCount,
+        }}
+        recentTranscripts={recentTranscriptRows}
+        upcomingDeadlines={upcomingDeadlineRows}
+      />
     </main>
   );
-}
-
-function StatTile({
-  label,
-  value,
-  tone,
-  href,
-}: {
-  label: string;
-  value: number;
-  tone?: "warning" | "success" | "jira";
-  href?: string;
-}) {
-  const valueColor =
-    tone === "warning"
-      ? "text-warning"
-      : tone === "success"
-        ? "text-success"
-        : tone === "jira"
-          ? "text-jira-blue"
-          : "text-accent";
-  const dotColor =
-    tone === "warning"
-      ? "bg-warning"
-      : tone === "success"
-        ? "bg-success"
-        : tone === "jira"
-          ? "bg-jira-blue"
-          : "bg-accent";
-
-  const content = (
-    <>
-      <p
-        className={`mb-1.5 text-[30px] font-bold leading-[1.1] tracking-[-0.02em] ${valueColor}`}
-      >
-        {value}
-      </p>
-      <p className="flex items-center gap-1.5 text-[12.5px] text-text-secondary">
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} />
-        {label}
-      </p>
-    </>
-  );
-
-  const className =
-    "rounded-[10px] border border-border bg-card px-5 pt-5 pb-[18px] shadow-card";
-
-  if (href) {
-    return (
-      <Link href={href} className={`${className} transition-colors hover:border-accent`}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <div className={className}>{content}</div>;
 }
