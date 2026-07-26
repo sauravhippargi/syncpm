@@ -129,6 +129,12 @@ export default function DashboardEmptyState({
           </div>
 
           <div className="flex flex-col items-center gap-3 rounded-[10px] border border-border bg-card p-6 shadow-card">
+            <span
+              aria-hidden="true"
+              className="invisible rounded-[6px] bg-accent px-2 py-0.5 text-[11px] font-medium text-white"
+            >
+              Recommended
+            </span>
             <span className="flex h-10 w-10 items-center justify-center rounded-[6px] bg-page">
               <Upload size={20} className="text-text-secondary" />
             </span>
