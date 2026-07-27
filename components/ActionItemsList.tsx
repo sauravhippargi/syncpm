@@ -25,6 +25,12 @@ export default function ActionItemsList({
     );
   }
 
+  function handleDueDateChange(id: string, dueDate: string | null) {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, dueDate } : item))
+    );
+  }
+
   function handleDeleted(id: string) {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
@@ -43,6 +49,7 @@ export default function ActionItemsList({
                 item={item}
                 jiraConnection={jiraConnection}
                 onStatusChange={(status) => handleStatusChange(item.id, status)}
+                onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
                 onDeleted={() => handleDeleted(item.id)}
               />
             ))}
@@ -77,6 +84,7 @@ export default function ActionItemsList({
                   item={item}
                   jiraConnection={jiraConnection}
                   onStatusChange={(status) => handleStatusChange(item.id, status)}
+                  onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
                   onDeleted={() => handleDeleted(item.id)}
                 />
               ))}

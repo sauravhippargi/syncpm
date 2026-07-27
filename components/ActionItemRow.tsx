@@ -9,6 +9,7 @@ import JiraSyncButton, {
 import SlackDraftModal from "./SlackDraftModal";
 import DeleteActionItemButton from "./DeleteActionItemButton";
 import ActionItemStatusSelect from "./ActionItemStatusSelect";
+import ActionItemDueDateInput from "./ActionItemDueDateInput";
 import { isBlockerNote } from "@/lib/action-items";
 
 export interface ActionItemRowData {
@@ -34,11 +35,13 @@ export default function ActionItemRow({
   item,
   jiraConnection,
   onStatusChange,
+  onDueDateChange,
   onDeleted,
 }: {
   item: ActionItemRowData;
   jiraConnection: JiraConnectionSummary | null;
   onStatusChange: (status: string) => void;
+  onDueDateChange: (dueDate: string | null) => void;
   onDeleted: () => void;
 }) {
   return (
@@ -52,13 +55,11 @@ export default function ActionItemRow({
             <span className="rounded-[6px] bg-accent-tint px-2 py-1 font-medium text-accent">
               {item.owner || "Unassigned"}
             </span>
-            {item.dueDate && (
-              <span>
-                {new Date(item.dueDate).toLocaleDateString(undefined, {
-                  timeZone: "UTC",
-                })}
-              </span>
-            )}
+            <ActionItemDueDateInput
+              actionItemId={item.id}
+              dueDate={item.dueDate}
+              onDueDateChange={onDueDateChange}
+            />
             {isBlockerNote(item.blockerNote) && (
               <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
                 Blocker
