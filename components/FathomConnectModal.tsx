@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ClipboardPaste } from "lucide-react";
 
 const FATHOM_API_KEY_SETTINGS_URL = "https://fathom.video/customize#api-access-header";
 
@@ -20,6 +21,28 @@ export default function FathomConnectModal({
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
+
+  const [pasteHint, setPasteHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pasteHint) return;
+    const timer = setTimeout(() => setPasteHint(null), 3000);
+    return () => clearTimeout(timer);
+  }, [pasteHint]);
+
+  // Some browsers require a permission prompt, and Safari restricts
+  // clipboard reads further (e.g. outside a direct user gesture) — fail
+  // quietly with an inline hint rather than a hard error or console noise.
+  async function handlePasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard?.readText();
+      if (typeof text !== "string") throw new Error("Clipboard unavailable");
+      setApiKey(text);
+      setPasteHint(null);
+    } catch {
+      setPasteHint("Couldn't access clipboard — try Cmd/Ctrl+V instead");
+    }
+  }
 
   async function handleConnect() {
     // Fathom's dashboard only ever shows the API key once — a pasted
@@ -170,14 +193,27 @@ export default function FathomConnectModal({
               >
                 Fathom API key
               </label>
-              <input
-                id="fathom-api-key"
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Paste your API key"
-                className="h-8 rounded-[6px] border border-border bg-card px-3 text-[13px] text-text-primary outline-none focus:border-accent"
-              />
+              <div className="relative">
+                <input
+                  id="fathom-api-key"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="Paste your API key"
+                  className="h-8 w-full rounded-[6px] border border-border bg-card px-3 pr-9 text-[13px] text-text-primary outline-none focus:border-accent"
+                />
+                <button
+                  type="button"
+                  onClick={handlePasteFromClipboard}
+                  aria-label="Paste from clipboard"
+                  className="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-[4px] text-text-secondary transition-colors hover:bg-page hover:text-text-primary"
+                >
+                  <ClipboardPaste size={14} />
+                </button>
+              </div>
+              {pasteHint && (
+                <p className="text-[11px] leading-[1.3] text-text-secondary">{pasteHint}</p>
+              )}
               <a
                 href={FATHOM_API_KEY_SETTINGS_URL}
                 target="_blank"

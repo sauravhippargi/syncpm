@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import {
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
   type DragEvent,
   type FormEvent,
 } from "react";
+import { ClipboardPaste } from "lucide-react";
 import {
   ALLOWED_EXTENSIONS,
   MAX_TRANSCRIPT_BYTES,
@@ -38,6 +40,27 @@ export default function TranscriptUploader() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<UploadError | null>(null);
+  const [pasteHint, setPasteHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pasteHint) return;
+    const timer = setTimeout(() => setPasteHint(null), 3000);
+    return () => clearTimeout(timer);
+  }, [pasteHint]);
+
+  // Some browsers require a permission prompt, and Safari restricts
+  // clipboard reads further (e.g. outside a direct user gesture) — fail
+  // quietly with an inline hint rather than a hard error or console noise.
+  async function handlePasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard?.readText();
+      if (typeof text !== "string") throw new Error("Clipboard unavailable");
+      setPastedText(text);
+      setPasteHint(null);
+    } catch {
+      setPasteHint("Couldn't access clipboard — try Cmd/Ctrl+V instead");
+    }
+  }
 
   function validateAndSetFile(selected: File) {
     setFile(null);
@@ -215,13 +238,28 @@ export default function TranscriptUploader() {
       </div>
 
       {mode === "paste" ? (
-        <textarea
-          value={pastedText}
-          onChange={(e) => setPastedText(e.target.value)}
-          placeholder="Paste the meeting transcript here..."
-          rows={12}
-          className="rounded-[10px] border border-border bg-card p-3 text-[14px] leading-[1.5] text-text-primary shadow-card outline-none focus:border-accent"
-        />
+        <div className="flex flex-col gap-1.5">
+          <div className="relative">
+            <textarea
+              value={pastedText}
+              onChange={(e) => setPastedText(e.target.value)}
+              placeholder="Paste the meeting transcript here..."
+              rows={12}
+              className="w-full rounded-[10px] border border-border bg-card p-3 pr-10 text-[14px] leading-[1.5] text-text-primary shadow-card outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={handlePasteFromClipboard}
+              aria-label="Paste from clipboard"
+              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] text-text-secondary transition-colors hover:bg-page hover:text-text-primary"
+            >
+              <ClipboardPaste size={15} />
+            </button>
+          </div>
+          {pasteHint && (
+            <p className="text-[11px] leading-[1.3] text-text-secondary">{pasteHint}</p>
+          )}
+        </div>
       ) : (
         <div
           onDragOver={(e) => {
