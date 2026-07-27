@@ -8,9 +8,7 @@ import JiraSyncButton, {
 } from "./JiraSyncButton";
 import SlackDraftModal from "./SlackDraftModal";
 import DeleteActionItemButton from "./DeleteActionItemButton";
-import ActionItemStatusSelect from "./ActionItemStatusSelect";
-import ActionItemDueDateInput from "./ActionItemDueDateInput";
-import { isBlockerNote } from "@/lib/action-items";
+import ActionItemFields, { type ActionItemFieldsPatch } from "./ActionItemFields";
 
 export interface ActionItemRowData {
   id: string;
@@ -27,27 +25,26 @@ export interface ActionItemRowData {
 // Action Items tab only (prd.md 6.3a) — the master list of every approved
 // item across all transcripts. This is the only place ticket creation
 // happens now; "edit" just links back to the item's source transcript's
-// Review & Edit screen, since that's the only place fields are editable.
-// Status changes and deletes are reported up to ActionItemsList via props,
-// rather than this component refreshing the page itself — that's what lets
-// a row move between the Open/Done sections instantly.
+// Review & Edit screen, since that's the only place the description is
+// editable. Owner/due date/status/blockers are edited inline via the shared
+// ActionItemFields component (same one Review & Edit and Deadlines use);
+// each saved field is reported up to ActionItemsList via onSaved so a status
+// change can move the row between the Open/Done sections instantly, no page
+// refresh.
 //
 // Each row is its own independent card (design.md's Component Tokens spec)
 // rather than sharing one box with dividers — these cards carry more
-// controls (owner, due date, status, ticket/message actions, edit/delete)
-// than a simple list row, so ActionItemsList gives them a 16px gap instead
-// of the 12px used between stacked cards elsewhere.
+// controls (fields plus ticket/message actions, edit/delete) than a simple
+// list row, so ActionItemsList gives them a 16px gap.
 export default function ActionItemRow({
   item,
   jiraConnection,
-  onStatusChange,
-  onDueDateChange,
+  onSaved,
   onDeleted,
 }: {
   item: ActionItemRowData;
   jiraConnection: JiraConnectionSummary | null;
-  onStatusChange: (status: string) => void;
-  onDueDateChange: (dueDate: string | null) => void;
+  onSaved: (patch: ActionItemFieldsPatch) => void;
   onDeleted: () => void;
 }) {
   return (
@@ -57,27 +54,12 @@ export default function ActionItemRow({
           <span className="mb-1.5 text-[14.5px] font-normal text-text-primary">
             {item.description || "Untitled action item"}
           </span>
-          <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-text-secondary">
-            <span className="rounded-[6px] bg-accent-tint px-2 py-1 font-medium text-accent">
-              {item.owner || "Unassigned"}
-            </span>
-            <ActionItemDueDateInput
-              actionItemId={item.id}
-              dueDate={item.dueDate}
-              onDueDateChange={onDueDateChange}
-            />
-            {isBlockerNote(item.blockerNote) && (
-              <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
-                Blocker
-              </span>
-            )}
-            <Link
-              href={`/review/${item.transcriptId}`}
-              className="text-text-secondary hover:underline"
-            >
-              {item.transcriptTitle || "Untitled meeting"}
-            </Link>
-          </div>
+          <Link
+            href={`/review/${item.transcriptId}`}
+            className="text-[12.5px] text-text-secondary hover:underline"
+          >
+            {item.transcriptTitle || "Untitled meeting"}
+          </Link>
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
@@ -96,12 +78,18 @@ export default function ActionItemRow({
         </div>
       </div>
 
+      <ActionItemFields
+        actionItemId={item.id}
+        value={{
+          owner: item.owner,
+          dueDate: item.dueDate,
+          status: item.status,
+          blockerNote: item.blockerNote,
+        }}
+        onSaved={onSaved}
+      />
+
       <div className="flex flex-wrap items-center gap-2">
-        <ActionItemStatusSelect
-          actionItemId={item.id}
-          status={item.status}
-          onStatusChange={onStatusChange}
-        />
         <JiraSyncButton
           actionItemId={item.id}
           owner={item.owner}

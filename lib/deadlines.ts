@@ -3,6 +3,7 @@ export interface DeadlineItemData {
   description: string;
   owner: string | null;
   dueDate: string; // ISO date-only (YYYY-MM-DD) or full ISO, always UTC midnight
+  status: string; // always "open" here — Deadlines only lists open items — but the shared fields component needs the current value to render Status
   blockerNote: string | null;
   transcriptId: string;
   transcriptTitle: string | null;

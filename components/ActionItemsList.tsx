@@ -19,15 +19,12 @@ export default function ActionItemsList({
   const [items, setItems] = useState(initialItems);
   const [doneExpanded, setDoneExpanded] = useState(false);
 
-  function handleStatusChange(id: string, status: string) {
+  // Any saved field is merged back into this component's state so the row
+  // reflects the edit — and, when the patch includes status, so the row
+  // moves between the Open/Done sections below without a page refresh.
+  function handleSaved(id: string, patch: Partial<ActionItemRowData>) {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item))
-    );
-  }
-
-  function handleDueDateChange(id: string, dueDate: string | null) {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, dueDate } : item))
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item))
     );
   }
 
@@ -50,8 +47,7 @@ export default function ActionItemsList({
               key={item.id}
               item={item}
               jiraConnection={jiraConnection}
-              onStatusChange={(status) => handleStatusChange(item.id, status)}
-              onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
+              onSaved={(patch) => handleSaved(item.id, patch)}
               onDeleted={() => handleDeleted(item.id)}
             />
           ))}
@@ -89,8 +85,7 @@ export default function ActionItemsList({
                   key={item.id}
                   item={item}
                   jiraConnection={jiraConnection}
-                  onStatusChange={(status) => handleStatusChange(item.id, status)}
-                  onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
+                  onSaved={(patch) => handleSaved(item.id, patch)}
                   onDeleted={() => handleDeleted(item.id)}
                 />
               ))}
