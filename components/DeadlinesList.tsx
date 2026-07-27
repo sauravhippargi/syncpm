@@ -71,7 +71,7 @@ function DeadlineSection({
 }) {
   const missed = variant === "missed";
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-4">
       <h2
         className={`text-[14px] font-semibold ${
           missed ? "text-danger" : "text-text-primary"
@@ -79,38 +79,42 @@ function DeadlineSection({
       >
         {title}
       </h2>
-      <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-        <div className="flex flex-col gap-4">
-          {groups.map((group) => (
-            <div key={group.key} className="flex flex-col gap-1">
-              <p
-                className={`text-[12.5px] font-medium ${
-                  missed ? "text-danger" : "text-text-secondary"
-                }`}
-              >
-                {group.label}
-              </p>
-              <ul className="flex flex-col divide-y divide-row-divider">
-                {group.items.map((item) => (
-                  <DeadlineRow
-                    key={item.id}
-                    item={item}
-                    onDueDateChange={onDueDateChange}
-                  />
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      {/* No shared card here — a date-group header is a plain-text label
+          sitting outside/above the cards below it, not padded inside the
+          same box as the items (design.md's Deadlines layout spec). */}
+      <div className="flex flex-col gap-4">
+        {groups.map((group) => (
+          <div key={group.key} className="flex flex-col gap-3">
+            <p
+              className={`text-[12.5px] font-medium ${
+                missed ? "text-danger" : "text-text-secondary"
+              }`}
+            >
+              {group.label}
+            </p>
+            <ul className="flex flex-col gap-3">
+              {group.items.map((item) => (
+                <DeadlineRow
+                  key={item.id}
+                  item={item}
+                  onDueDateChange={onDueDateChange}
+                />
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
-// The due date is no longer shown as plain text per-row — it's established
-// once by the group's date header, and now editable via a compact date
-// input (prd.md 6.8). Everything else on the row stays: owner pill, blocker
-// tag, and the source-transcript link.
+// Each action item is its own separate card — same bordered/shadowed style
+// as Action Items and Recent Transcripts — not multiple items sharing one
+// continuous box with internal dividers (design.md's Deadlines layout
+// spec). The due date is no longer shown as plain text — it's established
+// once by the group's date header above, and now editable via a compact
+// date input (prd.md 6.8). Everything else on the row stays: owner pill,
+// blocker tag, and the source-transcript link.
 function DeadlineRow({
   item,
   onDueDateChange,
@@ -119,7 +123,7 @@ function DeadlineRow({
   onDueDateChange: (id: string, dueDate: string | null) => void;
 }) {
   return (
-    <li className="flex flex-col py-3 first:pt-0 last:pb-0">
+    <li className="flex flex-col rounded-[10px] border border-border bg-card p-4 shadow-card">
       <span className="mb-1.5 text-[14.5px] font-normal text-text-primary">
         {item.description || "Untitled action item"}
       </span>
