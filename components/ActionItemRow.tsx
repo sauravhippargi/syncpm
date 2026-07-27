@@ -31,6 +31,12 @@ export interface ActionItemRowData {
 // Status changes and deletes are reported up to ActionItemsList via props,
 // rather than this component refreshing the page itself — that's what lets
 // a row move between the Open/Done sections instantly.
+//
+// Each row is its own independent card (design.md's Component Tokens spec)
+// rather than sharing one box with dividers — these cards carry more
+// controls (owner, due date, status, ticket/message actions, edit/delete)
+// than a simple list row, so ActionItemsList gives them a 16px gap instead
+// of the 12px used between stacked cards elsewhere.
 export default function ActionItemRow({
   item,
   jiraConnection,
@@ -45,7 +51,7 @@ export default function ActionItemRow({
   onDeleted: () => void;
 }) {
   return (
-    <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
+    <li className="flex flex-col gap-3 rounded-[10px] border border-border bg-card px-4 py-3.5 shadow-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col">
           <span className="mb-1.5 text-[14.5px] font-normal text-text-primary">

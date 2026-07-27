@@ -39,45 +39,51 @@ export default function ActionItemsList({
   const doneItems = items.filter((item) => item.status === "done");
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
+      {/* Each item is its own card, not a shared box with dividers (design.md's
+          Component Tokens spec) — 16px gap between cards here specifically,
+          since these carry more controls than a simple list row. */}
       {openItems.length > 0 && (
-        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-          <ul className="flex flex-col divide-y divide-row-divider">
-            {openItems.map((item) => (
-              <ActionItemRow
-                key={item.id}
-                item={item}
-                jiraConnection={jiraConnection}
-                onStatusChange={(status) => handleStatusChange(item.id, status)}
-                onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
-                onDeleted={() => handleDeleted(item.id)}
-              />
-            ))}
-          </ul>
-        </div>
+        <ul className="flex flex-col gap-4">
+          {openItems.map((item) => (
+            <ActionItemRow
+              key={item.id}
+              item={item}
+              jiraConnection={jiraConnection}
+              onStatusChange={(status) => handleStatusChange(item.id, status)}
+              onDueDateChange={(dueDate) => handleDueDateChange(item.id, dueDate)}
+              onDeleted={() => handleDeleted(item.id)}
+            />
+          ))}
+        </ul>
       )}
 
       {/* Only rendered once at least one item is actually Done — no empty
-          "Completed (0)" section (prd.md 6.3a). */}
+          "Completed (0)" section (prd.md 6.3a). The toggle stays its own
+          compact card; expanded items sit below as siblings, not nested
+          inside it — nesting individually-carded rows inside another
+          bordered box would read as a card within a card. */}
       {doneItems.length > 0 && (
-        <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
-          <button
-            type="button"
-            onClick={() => setDoneExpanded((expanded) => !expanded)}
-            aria-expanded={doneExpanded}
-            className="flex w-full items-center gap-2 text-left text-[14px] font-semibold text-text-primary"
-          >
-            <ChevronRight
-              size={16}
-              className={`shrink-0 text-text-secondary transition-transform ${
-                doneExpanded ? "rotate-90" : ""
-              }`}
-            />
-            Completed ({doneItems.length})
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
+            <button
+              type="button"
+              onClick={() => setDoneExpanded((expanded) => !expanded)}
+              aria-expanded={doneExpanded}
+              className="flex w-full items-center gap-2 text-left text-[14px] font-semibold text-text-primary"
+            >
+              <ChevronRight
+                size={16}
+                className={`shrink-0 text-text-secondary transition-transform ${
+                  doneExpanded ? "rotate-90" : ""
+                }`}
+              />
+              Completed ({doneItems.length})
+            </button>
+          </div>
 
           {doneExpanded && (
-            <ul className="mt-3 flex flex-col divide-y divide-row-divider">
+            <ul className="flex flex-col gap-4">
               {doneItems.map((item) => (
                 <ActionItemRow
                   key={item.id}
