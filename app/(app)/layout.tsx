@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
+import RefreshOnFocus from "@/components/RefreshOnFocus";
 
 export default async function AppLayout({
   children,
@@ -19,6 +20,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-1 flex-col md:flex-row">
+      <RefreshOnFocus />
       <MobileNav userEmail={userEmail} />
       <Sidebar userEmail={userEmail} />
       <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
