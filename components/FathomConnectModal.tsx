@@ -19,8 +19,21 @@ export default function FathomConnectModal({
 
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
 
   async function handleConnect() {
+    // Fathom's dashboard only ever shows the API key once — a pasted
+    // whsec_-prefixed value is deterministically a webhook secret, not an
+    // API key (confirmed by the whsec_ prefix used in signature
+    // verification, lib/fathom.ts), so this is worth catching before an
+    // unnecessary round trip to Fathom's API.
+    if (apiKey.trim().startsWith("whsec_")) {
+      setConnectError(
+        "This looks like a webhook secret, not an API key — paste the API key instead. If you don't still have it saved, you'll need to generate a new one in Fathom's settings."
+      );
+      return;
+    }
+
     setConnecting(true);
     setConnectError(null);
     try {
@@ -86,37 +99,68 @@ export default function FathomConnectModal({
         </div>
 
         {connected ? (
-          <>
-            <div className="flex items-center gap-2 rounded-[6px] bg-success-tint px-3 py-2">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-              <span className="text-[13px] font-medium text-success">
-                Connected
-              </span>
-            </div>
+          confirmingDisconnect ? (
+            <>
+              <p className="text-[13px] leading-[1.4] text-text-secondary">
+                Disconnecting removes your stored Fathom connection. To
+                reconnect later, you&apos;ll need a valid API key — if you
+                don&apos;t still have your original one saved, you&apos;ll
+                need to generate a new one in Fathom&apos;s settings
+                (regenerating invalidates the old key).
+              </p>
 
-            {disconnectError && (
-              <p className="text-[12px] font-medium text-danger">{disconnectError}</p>
-            )}
+              {disconnectError && (
+                <p className="text-[12px] font-medium text-danger">{disconnectError}</p>
+              )}
 
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={busy}
-                className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary disabled:opacity-50"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={handleDisconnect}
-                disabled={busy}
-                className="h-8 rounded-[6px] border border-danger-tint px-3 text-[12px] font-medium text-danger disabled:opacity-50"
-              >
-                {disconnecting ? "Disconnecting…" : "Disconnect"}
-              </button>
-            </div>
-          </>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDisconnect(false)}
+                  disabled={busy}
+                  className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  disabled={busy}
+                  className="h-8 rounded-[6px] bg-danger px-3 text-[12px] font-medium text-white disabled:opacity-50"
+                >
+                  {disconnecting ? "Disconnecting…" : "Disconnect"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 rounded-[6px] bg-success-tint px-3 py-2">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+                <span className="text-[13px] font-medium text-success">
+                  Connected
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={busy}
+                  className="h-8 rounded-[6px] border border-border bg-card px-3 text-[12px] font-medium text-text-primary disabled:opacity-50"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDisconnect(true)}
+                  disabled={busy}
+                  className="h-8 rounded-[6px] border border-danger-tint px-3 text-[12px] font-medium text-danger disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </>
+          )
         ) : (
           <>
             <div className="flex flex-col gap-1.5">
@@ -142,6 +186,11 @@ export default function FathomConnectModal({
               >
                 Where do I find this?
               </a>
+              <p className="text-[11px] leading-[1.4] text-text-secondary">
+                Connected before and disconnected? Fathom can&apos;t show
+                your original key again — click Regenerate on that page to
+                get a new one.
+              </p>
             </div>
 
             {connectError && (
