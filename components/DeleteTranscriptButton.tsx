@@ -78,7 +78,7 @@ export default function DeleteTranscriptButton({
           <div className="flex w-full max-w-sm flex-col gap-4 rounded-[10px] border border-border bg-card p-6 shadow-card">
             <div className="flex flex-col gap-1.5">
               <h2 className="text-[14px] font-medium leading-[1.4] text-text-primary">
-                Delete this transcript?
+                Delete This Transcript?
               </h2>
               <p className="text-[13px] leading-[1.4] text-text-secondary">
                 {`This removes "${title}" and its ${actionItemCount} action item${actionItemCount === 1 ? "" : "s"} from SyncPM. This can't be undone. Tickets already created in Jira will not be affected.`}

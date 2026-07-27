@@ -136,7 +136,7 @@ export default function RaiseATicketModal({
       <div className="flex w-full max-w-lg flex-col gap-4 rounded-[10px] border border-border bg-card p-6 shadow-card">
         <div className="flex flex-col gap-1">
           <h2 className="text-[14px] font-medium leading-[1.4] text-text-primary">
-            Raise a ticket
+            Raise a Ticket
           </h2>
           <p className="text-[13px] leading-[1.4] text-text-secondary">
             {connected

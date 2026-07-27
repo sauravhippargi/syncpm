@@ -58,7 +58,7 @@ export default function DashboardBody({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
         <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
           <p className="text-[14px] font-semibold text-text-primary">
-            Recent transcripts
+            Recent Transcripts
           </p>
           <ul className="mt-3 flex flex-col divide-y divide-row-divider">
             {recentTranscripts.map((t) => (
@@ -90,7 +90,7 @@ export default function DashboardBody({
         <div className="rounded-[10px] border border-border bg-card p-4 shadow-card">
           <div className="flex items-center justify-between">
             <p className="text-[14px] font-semibold text-text-primary">
-              Upcoming deadlines
+              Upcoming Deadlines
             </p>
             <Link
               href="/deadlines"

@@ -17,9 +17,9 @@ import HowToUseModal from "./HowToUseModal";
 
 const NAV_ITEMS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/upload", label: "Upload transcript", icon: Upload },
-  { href: "/history/transcripts", label: "Transcript history", icon: History },
-  { href: "/action-items", label: "Action items", icon: ListChecks },
+  { href: "/upload", label: "Upload Transcript", icon: Upload },
+  { href: "/history/transcripts", label: "Transcript History", icon: History },
+  { href: "/action-items", label: "Action Items", icon: ListChecks },
   { href: "/tickets", label: "Tickets", icon: Ticket },
   { href: "/deadlines", label: "Deadlines", icon: CalendarClock },
 ];
@@ -61,7 +61,7 @@ export default function SidebarNav() {
         className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px] font-medium text-text-secondary transition-colors hover:bg-page"
       >
         <Info size={16} className="shrink-0" />
-        <span>How to use</span>
+        <span>How to Use</span>
       </button>
 
       {howToUseOpen && (

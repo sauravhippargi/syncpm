@@ -79,7 +79,7 @@ export default async function TicketsPage({
 
           <div className="flex flex-col gap-3">
             <p className="text-[14px] font-semibold text-text-primary">
-              Recently created tickets
+              Recently Created Tickets
             </p>
 
             {recentTickets.length === 0 ? (

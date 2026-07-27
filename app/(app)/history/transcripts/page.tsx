@@ -26,7 +26,7 @@ export default async function TranscriptHistoryPage() {
     <main className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col gap-6 px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-[24px] font-bold leading-[1.2] tracking-[-0.01em] text-text-primary">
-          Transcript history
+          Transcript History
         </h1>
         {fathomConnection && <FathomBackfillButton />}
       </div>
