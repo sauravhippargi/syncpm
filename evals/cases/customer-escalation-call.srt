@@ -1,0 +1,63 @@
+1
+00:00:00,000 --> 00:00:08,000
+Taylor Brooks: Thanks for jumping on short notice. Northwind's data sync has been failing intermittently since last night and they're a top-20 account, so this is priority one.
+
+2
+00:00:08,000 --> 00:00:18,000
+Morgan Ellis: Yeah, their VP emailed me directly this morning. They want a root cause and a plan by end of day, or they're threatening to escalate to their legal team over the SLA.
+
+3
+00:00:18,000 --> 00:00:32,000
+Chris Nakamura: I've been digging into it since the page came in. Looks like it's related to a change in the vendor's webhook payload format from yesterday's release. I need someone from the infra team to confirm the ingestion pipeline config before I can patch it, but I don't have access to that environment myself.
+
+4
+00:00:32,000 --> 00:00:36,000
+Taylor Brooks: Do we know who's on call for infra this weekend?
+
+5
+00:00:36,000 --> 00:00:44,000
+Chris Nakamura: Not sure, it's not me. I think it's whoever's covering for the DevOps lead this week since he's out.
+
+6
+00:00:44,000 --> 00:00:56,000
+Taylor Brooks: Okay, I'll track down whoever that is and get them looped in within the hour — we can't patch this without infra confirming the config first, so that's the real blocker right now.
+
+7
+00:00:56,000 --> 00:01:06,000
+Morgan Ellis: While that's happening, I want to get ahead of it with Northwind. Can someone draft a status update I can send them by noon? Just acknowledging the issue and giving a rough timeline.
+
+8
+00:01:06,000 --> 00:01:10,000
+Taylor Brooks: I can write that up, I'll have a draft to you by 11.
+
+9
+00:01:10,000 --> 00:01:20,000
+Chris Nakamura: Once I get infra access confirmed, I think the actual fix is maybe two hours of work. I can have a patch ready for review today if I get unblocked before end of day.
+
+10
+00:01:20,000 --> 00:01:30,000
+Morgan Ellis: And if we do end up needing to offer them a service credit, legal will need to sign off on the language before I can put it in writing. I don't want to promise anything without that.
+
+11
+00:01:30,000 --> 00:01:38,000
+Taylor Brooks: Fair, I'll loop in legal as a heads up now so they're not blindsided if it comes to that, even though nothing's decided yet.
+
+12
+00:01:38,000 --> 00:01:50,000
+Chris Nakamura: One more thing — once this is fixed, I want to add an alert so we catch schema changes like this earlier next time. I'll write that up as a follow-up ticket, not urgent, just don't want to forget it.
+
+13
+00:01:50,000 --> 00:02:14,000
+Taylor Brooks: Good idea, let's not lose that. Okay — recap: I'm finding the infra on-call and getting them looped in within the hour, then writing the customer status update by 11 for Morgan to send by noon. Chris has the patch ready today once he's unblocked, and I'm giving legal a heads-up now in case a credit needs sign-off later. Chris will also file a follow-up ticket for the alerting gap. Anything I'm missing?
+
+14
+00:02:14,000 --> 00:02:16,000
+Morgan Ellis: That covers it from my side.
+
+15
+00:02:16,000 --> 00:02:18,000
+Chris Nakamura: Nope, that's everything.
+
+16
+00:02:18,000 --> 00:02:22,000
+Taylor Brooks: Great, let's regroup at 4pm to check status.

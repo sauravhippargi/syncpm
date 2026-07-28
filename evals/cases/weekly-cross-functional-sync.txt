@@ -1,0 +1,40 @@
+Weekly Cross-Functional Sync — Jul 22
+Attendees: Sarah Kim (PM), Marcus Chen (Engineering Lead), Priya Nair (Design Lead), Devon Ruiz (Marketing)
+
+Sarah: Alright, let's get started. Quick round-up on the pricing page redesign — Priya, where are we?
+
+Priya: Design's basically done. I sent the final mocks over yesterday. The one open question is whether we're doing three pricing tiers or four, since that changes the layout.
+
+Sarah: Let's go with three for now, we can always expand later. Marcus, does engineering have what they need to start building?
+
+Marcus: Mostly, yeah. Priya, can you export the assets in the sizes we talked about? I can start on the component work Monday if I have those by end of week.
+
+Priya: Yep, I'll get those to you by Friday.
+
+Sarah: Great. Marcus, any blockers on your end otherwise?
+
+Marcus: Actually yes — we're blocked on legal for the updated terms of service language that needs to go on the enterprise tier. I pinged them last week and haven't heard back. Can't ship that tier without it.
+
+Sarah: Okay, I'll follow up with legal directly today and try to get an ETA.
+
+Devon: While we're on pricing — marketing needs final copy approved before we can update the website. Sarah, can you review the copy doc I sent? I'd like to get that live before the pricing page ships.
+
+Sarah: I'll review it by Wednesday.
+
+Marcus: One more thing — QA flagged a bug in the billing webhook handler, duplicate charges showing up in staging. I want to get that fixed before we touch pricing at all.
+
+Sarah: Good catch. Can you own that one?
+
+Marcus: Yeah, I'll have a fix up for review by tomorrow.
+
+Devon: Also — has anyone heard from the design team about the new logo lockup for the email templates? I need that for the campaign going out next week.
+
+Priya: That's actually done, I just forgot to share it. I'll send it right after this call.
+
+Sarah: Perfect. Okay, let's do a quick recap. Priya's exporting assets for Marcus by Friday, I'm chasing legal on the ToS language and reviewing Devon's copy by Wednesday, Marcus is fixing the billing webhook bug by tomorrow, and Priya's sending the logo lockup today. Anything else?
+
+Marcus: Nope, that covers it on my end.
+
+Devon: Same here.
+
+Sarah: Great, thanks everyone. Talk next week.

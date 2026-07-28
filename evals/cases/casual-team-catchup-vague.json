@@ -1,0 +1,41 @@
+{
+  "transcriptFile": "casual-team-catchup-vague.txt",
+  "notes": "The hardest case by design — real commitments buried in hedging and small talk. Tests: no invented due dates, correct handling of a genuinely unassigned/ambiguous owner, and NOT extracting hearsay/scheduling as if they were real tasks.",
+  "expectedItems": [
+    {
+      "id": "circle-back-pricing",
+      "descriptionContains": ["pricing"],
+      "owner": "Jordan",
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "note": "'I'll try to circle back to it when I get a chance' has no real deadline — must not hallucinate one."
+    },
+    {
+      "id": "vendor-contract-followup",
+      "descriptionContains": ["vendor", "contract"],
+      "owner": "Riley",
+      "dueDateExpected": false,
+      "blockerExpected": true,
+      "blockerNoteContains": ["legal"],
+      "note": "'Legal's been sitting on it forever' / 'pinged again, no response' is blocker language, even without an explicit 'we are blocked' statement."
+    }
+  ],
+  "optionalItems": [
+    {
+      "id": "meridian-dashboard-slowness",
+      "descriptionContains": ["meridian", "dashboard"],
+      "ownerExpected": null,
+      "note": "'Might be worth someone poking at it' names no one. Acceptable to extract as unassigned, or to skip entirely — NOT acceptable to confidently assign it to a specific named person, since no one volunteered."
+    }
+  ],
+  "forbiddenItems": [
+    {
+      "descriptionContains": ["onboarding", "refresh"],
+      "reason": "Secondhand hearsay about a vague 'vibe' from someone in design — not a real decision or commitment made in this meeting."
+    },
+    {
+      "descriptionContains": ["same time", "next week"],
+      "reason": "Pure meeting-scheduling logistics, not a task."
+    }
+  ]
+}

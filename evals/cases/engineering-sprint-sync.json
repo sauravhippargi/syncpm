@@ -1,0 +1,51 @@
+{
+  "transcriptFile": "engineering-sprint-sync.vtt",
+  "notes": "Confirmed against Alex's own recap (cue 13). Tests: a genuine vendor-side blocker (Twilio), and a deliberately deprioritized item with only a vague relative timeline ('next week, no rush') that should not get a hallucinated hard date.",
+  "expectedItems": [
+    {
+      "id": "escalate-twilio",
+      "descriptionContains": ["twilio", "escalate"],
+      "owner": "Alex Rivera",
+      "dueDateExpected": true,
+      "blockerExpected": true,
+      "blockerNoteContains": ["twilio", "rate limit"]
+    },
+    {
+      "id": "endpoint-for-kim",
+      "descriptionContains": ["endpoint"],
+      "owner": "Jordan Patel",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "fix-duplicate-notification-bug",
+      "descriptionContains": ["duplicate", "notification"],
+      "owner": "Jordan Patel",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "wire-up-ui",
+      "descriptionContains": ["ui", "wire"],
+      "owner": "Kim Osei",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "full-qa-pass",
+      "descriptionContains": ["qa"],
+      "owner": "Sam Torres",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    }
+  ],
+  "optionalItems": [
+    {
+      "id": "accessibility-audit",
+      "descriptionContains": ["accessibility"],
+      "owner": "Kim Osei",
+      "dueDateExpected": false,
+      "note": "Explicitly deprioritized ('no rush') with only a vague 'next week' timeline — acceptable to extract or skip, but if extracted, must NOT have a specific hallucinated calendar date."
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+Casual Team Catch-up — Jul 26
+Attendees: Alex, Jordan, Sam, Riley
+
+Alex: Hey everyone, sorry I'm a bit late, was on another call. How's everyone doing?
+
+Jordan: Good, good. Busy week honestly.
+
+Sam: Yeah same. So what's on the agenda today?
+
+Alex: Nothing formal really, just wanted to touch base on a few things. How's the whole pricing thing going?
+
+Jordan: Oh, um, it's... fine I guess? I haven't really looked at it since last week to be honest. There's a lot going on.
+
+Alex: Yeah no worries, I know it's not urgent urgent, but we probably shouldn't let it sit too much longer. Customers keep asking.
+
+Jordan: Yeah true. I'll try to circle back to it when I get a chance.
+
+Sam: Speaking of customers, did anyone see that email from the Meridian folks? They mentioned something about the dashboard being slow for them.
+
+Riley: Oh yeah I saw that. I think it's probably just their account has a ton of data, but who knows. Might be worth someone poking at it.
+
+Sam: Yeah, could be. I don't think it's a huge deal but if it keeps happening we might hear more complaints.
+
+Alex: Fair. Let's keep an eye on it I guess.
+
+Jordan: Also, random thing, I was talking to someone from design last week and they mentioned the onboarding flow might need a refresh at some point. Nothing specific, just a vibe they had.
+
+Riley: Huh, interesting. Yeah I mean it has been a while since anyone touched that.
+
+Alex: Maybe. Let's not go down that rabbit hole today though.
+
+Sam: Oh, one more thing — the vendor contract thing, is that still stuck?
+
+Riley: Ugh, yeah. Legal's been sitting on it forever. I pinged them again but no response yet.
+
+Alex: That's annoying. Might need to escalate that if it drags on much longer.
+
+Riley: Yeah maybe. I'll give it another few days.
+
+Jordan: Anything else? I've got another call in a few minutes.
+
+Alex: No I think that's it. Same time next week?
+
+Sam: Works for me.
+
+Riley: Yep, sounds good.
+
+Alex: Cool, thanks everyone.

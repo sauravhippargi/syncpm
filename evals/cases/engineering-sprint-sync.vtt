@@ -1,0 +1,65 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:07.000
+Alex Rivera: Morning everyone. Let's run through where we are on the notifications feature before sprint ends Friday.
+
+2
+00:00:07.000 --> 00:00:20.000
+Jordan Patel: Backend's mostly there. The one thing holding me up is we're still waiting on Twilio to increase our rate limit — I opened a support ticket four days ago and haven't heard back. Can't load-test the SMS path until that's resolved.
+
+3
+00:00:20.000 --> 00:00:28.000
+Alex Rivera: Okay, that's a real blocker. I'll escalate with our Twilio account rep today and see if I can get someone on the phone.
+
+4
+00:00:28.000 --> 00:00:38.000
+Kim Osei: On the frontend side, the notification settings UI is basically done, just waiting on Jordan's endpoint to wire it up for real data. Right now I'm working off mocked responses.
+
+5
+00:00:38.000 --> 00:00:48.000
+Jordan Patel: I can have the endpoint ready for you by Wednesday even without the Twilio fix, since that only affects the SMS channel — email and push should work fine.
+
+6
+00:00:48.000 --> 00:00:54.000
+Kim Osei: Perfect, that unblocks me. I'll have the full UI wired up and ready for QA by Thursday then.
+
+7
+00:00:54.000 --> 00:01:04.000
+Sam Torres: Speaking of QA, I found a bug yesterday where push notifications are being sent twice if the user has multiple devices registered. Logged it in the tracker already.
+
+8
+00:01:04.000 --> 00:01:14.000
+Jordan Patel: Yeah, I saw that. I think it's a dedup issue in the fan-out job. I can take that one, should be a quick fix — I'll get a patch up tomorrow.
+
+9
+00:01:14.000 --> 00:01:22.000
+Alex Rivera: Great. Sam, once Kim's UI is ready Thursday, can you run a full QA pass before we cut the release Friday morning?
+
+10
+00:01:22.000 --> 00:01:26.000
+Sam Torres: Yep, I'll block off Thursday afternoon for that.
+
+11
+00:01:26.000 --> 00:01:34.000
+Alex Rivera: One more thing — Kim, did you get a chance to look at the accessibility audit feedback from last week?
+
+12
+00:01:34.000 --> 00:01:42.000
+Kim Osei: Not yet, honestly it's been lower priority with the notifications work. I can look at it next week once this ships.
+
+13
+00:01:42.000 --> 00:02:05.000
+Alex Rivera: That's fine, no rush on that one. Okay, let's recap — I'm escalating the Twilio ticket today, Jordan's getting the endpoint to Kim by Wednesday and fixing the duplicate-notification bug by tomorrow, Kim's wiring up the UI by Thursday, and Sam's doing full QA Thursday afternoon before Friday's release. Sound good?
+
+14
+00:02:05.000 --> 00:02:07.000
+Jordan Patel: Sounds good.
+
+15
+00:02:07.000 --> 00:02:08.000
+Kim Osei: Yep.
+
+16
+00:02:08.000 --> 00:02:10.000
+Sam Torres: All set.

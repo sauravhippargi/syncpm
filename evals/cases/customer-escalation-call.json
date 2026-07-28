@@ -1,0 +1,54 @@
+{
+  "transcriptFile": "customer-escalation-call.srt",
+  "notes": "Confirmed against Taylor's own recap (cue 13). Tests tight same-day relative deadlines ('within the hour', 'by 11', 'by noon') and a real blocker chain (Chris's patch is blocked on an infra confirmation).",
+  "expectedItems": [
+    {
+      "id": "find-infra-oncall",
+      "descriptionContains": ["infra", "on-call"],
+      "owner": "Taylor Brooks",
+      "dueDateExpected": true,
+      "blockerExpected": true,
+      "blockerNoteContains": ["infra", "config"],
+      "note": "This is the blocker itself in the transcript's own words ('that's the real blocker right now') — should be flagged as blocked, not just a plain task."
+    },
+    {
+      "id": "draft-customer-status-update",
+      "descriptionContains": ["status update", "draft"],
+      "owner": "Taylor Brooks",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "prepare-patch",
+      "descriptionContains": ["patch"],
+      "owner": "Chris Nakamura",
+      "dueDateExpected": true,
+      "blockerExpected": true,
+      "blockerNoteContains": ["infra", "access"]
+    },
+    {
+      "id": "legal-heads-up",
+      "descriptionContains": ["legal"],
+      "owner": "Taylor Brooks",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "file-alerting-followup-ticket",
+      "descriptionContains": ["alert", "ticket"],
+      "owner": "Chris Nakamura",
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "note": "Explicitly 'not urgent' with no real timeline — should not get a hallucinated date."
+    }
+  ],
+  "optionalItems": [
+    {
+      "id": "send-status-update-to-northwind",
+      "descriptionContains": ["send", "northwind"],
+      "owner": "Morgan Ellis",
+      "dueDateExpected": true,
+      "note": "Closely related to draft-customer-status-update above — acceptable if merged into one item or kept separate."
+    }
+  ]
+}

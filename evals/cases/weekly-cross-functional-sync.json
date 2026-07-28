@@ -1,0 +1,48 @@
+{
+  "transcriptFile": "weekly-cross-functional-sync.txt",
+  "notes": "Owners and blockers confirmed directly against the transcript's own recap line (Sarah's summary at the end). This is the 'clean' baseline case — clear language, explicit ownership.",
+  "expectedItems": [
+    {
+      "id": "export-assets",
+      "descriptionContains": ["export", "assets"],
+      "owner": "Priya Nair",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "chase-legal-tos",
+      "descriptionContains": ["legal", "terms of service"],
+      "owner": "Sarah Kim",
+      "dueDateExpected": true,
+      "blockerExpected": true,
+      "blockerNoteContains": ["legal"]
+    },
+    {
+      "id": "review-copy",
+      "descriptionContains": ["review", "copy"],
+      "owner": "Sarah Kim",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "fix-billing-bug",
+      "descriptionContains": ["billing", "webhook", "bug"],
+      "owner": "Marcus Chen",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    },
+    {
+      "id": "send-logo-lockup",
+      "descriptionContains": ["logo", "lockup"],
+      "owner": "Priya Nair",
+      "dueDateExpected": true,
+      "blockerExpected": false
+    }
+  ],
+  "forbiddenItems": [
+    {
+      "descriptionContains": ["talk", "next week"],
+      "reason": "Sarah's closing line is scheduling small talk, not a task"
+    }
+  ]
+}
