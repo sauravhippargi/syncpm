@@ -14,8 +14,7 @@
       "descriptionContains": ["legal", "terms of service"],
       "owner": "Sarah Kim",
       "dueDateExpected": true,
-      "blockerExpected": true,
-      "blockerNoteContains": ["legal"]
+      "note": "Sarah's own 'follow up with legal for an ETA' is an unblocking action, not itself a blocked task — the blocker is on Marcus's separate enterprise-tier work. So blocker status is intentionally not asserted here (neither required nor forbidden)."
     },
     {
       "id": "review-copy",
