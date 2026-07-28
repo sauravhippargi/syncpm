@@ -62,9 +62,9 @@ Today's date is ${today}. Use it to resolve any relative due dates mentioned in 
 
 For each concrete action item or task discussed, extract:
 - description: the task in plain language
-- owner: the person assigned, if named in the transcript (else null)
+- owner: the person responsible for the task — whoever is explicitly asked to do it or who accepts it. This is NOT the speaker who raised it, and NOT simply the nearest name in the surrounding text. When someone is addressed directly by name to do something ("Kim, can you wire up the UI?"), the owner is the person addressed (Kim). When different tasks are handed to different people in the same exchange, attribute each task to whoever actually owns it — do not blend or swap names. If no one is clearly assigned, use null rather than guessing a name.
 - dueDate: an ISO date (YYYY-MM-DD) if a due date was mentioned or clearly implied (else null)
-- blockerNote: if the item represents a blocker or dependency (language like "waiting on", "blocked by", "can't move until"), a short note describing what's blocking it — otherwise null. A non-empty note is what makes this item a blocker; there is no separate flag.
+- blockerNote: a short note describing what is blocking or gating this task, or null if nothing is. Explicit blocker language is a definite signal you MUST capture — never leave blockerNote null when the transcript uses the words "blocker", "blocked", or "blocking" (e.g. "that's the real blocker right now", "we're blocked on legal"), or phrasing such as "waiting on X", "stuck on X", "held up by X", "can't ship/start/move until Y", or "pending X". Describe what is blocking the task, in the transcript's own terms. A non-empty note is what makes this item a blocker; there is no separate flag.
 
 Only extract items with a concrete, actionable description. Skip vague discussion that didn't result in a task.
 
