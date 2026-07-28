@@ -31,10 +31,14 @@ const CASES_DIR = join(dirname(fileURLToPath(import.meta.url)), "cases");
 // report a pass RATE, not a single pass/fail (phases.md Phase 8).
 const TRIALS = Number(process.env.EVAL_TRIALS) || 3;
 
-// 4 cases × 3 trials = 12 Gemini calls; a gap between them keeps us under the
-// free-tier per-minute limit (~10-15 RPM) rather than leaning on 429 retries —
-// at 2.5s a burst still tripped the limit, so pace at ~6s.
-const DELAY_BETWEEN_CALLS_MS = Number(process.env.EVAL_DELAY_MS) || 6000;
+// Proactive gap between calls to stay under the free-tier per-minute limit
+// (~10 RPM). 6s (≈10/min) sat right at the ceiling, so the inner
+// lib/gemini.ts retry ended up routinely doing the rate-limit work — which
+// muddies any measurement of the outer wrapper's backoff. 9s (≈6-7/min)
+// leaves real headroom so the first call of each trial rarely 429s and the
+// inner retry rarely fires, letting the outer wrapper's backoff be what's
+// actually exercised when a limit is hit.
+const DELAY_BETWEEN_CALLS_MS = Number(process.env.EVAL_DELAY_MS) || 9000;
 
 // Scoring (expected/optional/forbidden tiers) lives in ./scoring.ts as pure,
 // side-effect-free functions so it can be exercised deterministically without
