@@ -75,6 +75,15 @@ against the per-minute bucket, so aggressive retrying is self-perpetuating —
 it empties RPM faster and causes *more* 429s. A gentler, slower cadence would
 complete more trials than aggressive retries do.
 
+**Fixed (pending a real re-test):** the eval's retry wrapper (`evals/run.ts`)
+now uses **exponential backoff with equal jitter** (~10-20s → 20-40s → 40-80s,
+capped) and a hard **4-retry cap** instead of a fixed 35s cooldown. By the
+2nd–3rd retry the wait exceeds the 60s per-minute window, so it clears RPM
+rather than pinning it empty; a genuinely exhausted daily window now fails out
+in bounded time (~150-300s worst case) instead of being hammered. Whether this
+actually completes more trials cleanly at the same call volume still needs a
+real run once quota allows.
+
 ## Why the app carries two Gemini models
 
 This is the concrete evidence for that design choice. **RPD quota is tracked

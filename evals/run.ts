@@ -55,18 +55,33 @@ function loadTranscript(transcriptFile: string): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// lib/gemini.ts's built-in 429 backoff (1s→2s→4s) is tuned for one user
-// action; a 12-call eval burst can still exhaust the free-tier per-minute
-// quota. Rather than lose a whole trial to a transient rate limit (an ERROR
-// trial yields no signal), wait out a longer cooldown and retry the same
-// extraction. Only rate-limit errors are retried — a real extraction/schema
-// failure should surface, not be masked.
-const RATE_LIMIT_COOLDOWN_MS = Number(process.env.EVAL_COOLDOWN_MS) || 35000;
-const RATE_LIMIT_RETRIES = 3;
+// When a call comes back rate-limited (after lib/gemini.ts's own built-in
+// 1s→2s→4s backoff has already given up), retry the extraction — but with
+// REAL exponential backoff and jitter, not a fixed short cooldown. A rejected
+// 429 still counts against the per-minute bucket, so retrying on a short fixed
+// timer just keeps that window pinned empty and manufactures more 429s (the
+// retry-storm problem documented in GEMINI-QUOTA-NOTES.md). Growing the wait
+// each time lets the per-minute window actually clear, and a hard retry cap
+// means a genuinely exhausted (daily) window fails out in bounded time instead
+// of being hammered indefinitely. Only rate-limit errors are retried — a real
+// extraction/schema failure should surface, not be masked.
+const RATE_LIMIT_MAX_RETRIES = Number(process.env.EVAL_MAX_RETRIES) || 4;
+const BACKOFF_BASE_MS = Number(process.env.EVAL_BACKOFF_BASE_MS) || 20000;
+const BACKOFF_CAP_MS = Number(process.env.EVAL_BACKOFF_CAP_MS) || 80000;
 
 function isRateLimit(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return /rate limit|429/i.test(msg);
+}
+
+// Equal-jitter exponential backoff: half the (capped, doubling) window is
+// guaranteed and half is randomized. Full jitter can return a near-zero wait,
+// which is a poor fit for a per-minute limit that needs a real pause to
+// recover; equal jitter keeps every wait substantial while still decorrelating
+// retry timing. attempt 0 → ~10-20s, 1 → ~20-40s, 2 → ~40-80s, then capped.
+function backoffDelayMs(attempt: number): number {
+  const window = Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** attempt);
+  return Math.round(window / 2 + Math.random() * (window / 2));
 }
 
 async function extractWithRateLimitRetry(text: string): Promise<ExtractedActionItem[]> {
@@ -74,11 +89,12 @@ async function extractWithRateLimitRetry(text: string): Promise<ExtractedActionI
     try {
       return await extractActionItems(text);
     } catch (err) {
-      if (isRateLimit(err) && attempt < RATE_LIMIT_RETRIES) {
+      if (isRateLimit(err) && attempt < RATE_LIMIT_MAX_RETRIES) {
+        const waitMs = backoffDelayMs(attempt);
         console.log(
-          `       (rate-limited — cooling down ${RATE_LIMIT_COOLDOWN_MS / 1000}s, retry ${attempt + 1}/${RATE_LIMIT_RETRIES})`
+          `       (rate-limited — backing off ${(waitMs / 1000).toFixed(1)}s, retry ${attempt + 1}/${RATE_LIMIT_MAX_RETRIES})`
         );
-        await sleep(RATE_LIMIT_COOLDOWN_MS);
+        await sleep(waitMs);
         continue;
       }
       throw err;
