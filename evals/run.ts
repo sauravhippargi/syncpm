@@ -98,18 +98,32 @@ async function main() {
     process.exit(1);
   }
 
+  // Optional substring filter to run a single fixture in isolation — useful
+  // for iterating on one flaky case (or getting a larger sample on it) without
+  // spending quota re-running the whole suite. e.g. EVAL_CASE=engineering.
+  const caseFilter = process.env.EVAL_CASE;
+
   const fixtureFiles = readdirSync(CASES_DIR)
     .filter((f) => f.endsWith(".json"))
+    .filter((f) => !caseFilter || f.includes(caseFilter))
     .sort();
 
   if (fixtureFiles.length === 0) {
-    console.error(`No fixtures found in ${CASES_DIR}`);
+    console.error(
+      caseFilter
+        ? `No fixtures in ${CASES_DIR} match EVAL_CASE="${caseFilter}"`
+        : `No fixtures found in ${CASES_DIR}`
+    );
     process.exit(1);
   }
 
   console.log("SyncPM — Extraction Eval Harness");
   console.log(`Model path: normalizeTranscript → extractActionItems (production pipeline)`);
-  console.log(`${fixtureFiles.length} cases × ${TRIALS} trials each\n`);
+  console.log(
+    `${fixtureFiles.length} case(s) × ${TRIALS} trials each` +
+      (caseFilter ? ` (filtered by EVAL_CASE="${caseFilter}")` : "") +
+      "\n"
+  );
 
   let suitePassedTrials = 0;
   let suiteTotalTrials = 0;
