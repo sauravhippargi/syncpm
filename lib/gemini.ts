@@ -33,12 +33,17 @@ const BACKOFF_MS = [1000, 2000, 4000];
 
 // generationConfig is optional — omit it entirely for plain-text output
 // (e.g. Slack draft messages); pass responseMimeType/responseSchema for
-// structured JSON output (e.g. extraction).
+// structured JSON output (e.g. extraction). apiKeyOverride defaults to
+// GEMINI_API_KEY (the only key production callers ever use) — it exists so
+// evals/run.ts can pass its own separate GEMINI_API_KEY_EVAL key, keeping
+// eval trials off the same free-tier daily quota as real user traffic,
+// without any production call site needing to change.
 async function callGemini(
   prompt: string,
-  generationConfig?: Record<string, unknown>
+  generationConfig?: Record<string, unknown>,
+  apiKeyOverride?: string
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = apiKeyOverride ?? process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new GeminiRequestError("GEMINI_API_KEY is not configured");
   }
@@ -88,19 +93,24 @@ async function callGemini(
 }
 
 export async function extractActionItems(
-  transcriptText: string
+  transcriptText: string,
+  apiKeyOverride?: string
 ): Promise<ExtractedActionItem[]> {
   const prompt = buildExtractionPrompt(transcriptText);
-  const rawOutput = await callGemini(prompt, {
-    responseMimeType: "application/json",
-    responseSchema: ACTION_ITEM_RESPONSE_SCHEMA,
-    // Extraction must be deterministic: the same transcript should always
-    // yield the same action items. At the model default (temperature 1) the
-    // identical transcript produced anywhere from 1 to 4 items with differing
-    // phrasing across runs (observed on the "PMM Team Weekly Call" re-sync).
-    // Consistency matters here far more than creative variation, so pin it low.
-    temperature: 0,
-  });
+  const rawOutput = await callGemini(
+    prompt,
+    {
+      responseMimeType: "application/json",
+      responseSchema: ACTION_ITEM_RESPONSE_SCHEMA,
+      // Extraction must be deterministic: the same transcript should always
+      // yield the same action items. At the model default (temperature 1) the
+      // identical transcript produced anywhere from 1 to 4 items with differing
+      // phrasing across runs (observed on the "PMM Team Weekly Call" re-sync).
+      // Consistency matters here far more than creative variation, so pin it low.
+      temperature: 0,
+    },
+    apiKeyOverride
+  );
 
   let parsed: unknown;
   try {

@@ -5,12 +5,23 @@
  *
  * Run with: `npm run eval`
  *
- * It calls the SAME extraction the app uses in production — normalizeTranscript
- * (lib/transcript.ts) then extractActionItems (lib/gemini.ts) — so it can't
- * drift out of sync with real behavior. extractActionItems is exactly what
- * lib/extraction.ts's runExtractionForTranscript() calls; we invoke it directly
- * only to skip the DB write (the eval has no transcript rows to persist to),
- * not to reimplement anything.
+ * It calls the SAME extraction logic the app uses in production —
+ * normalizeTranscript (lib/transcript.ts) then extractActionItems
+ * (lib/gemini.ts) — so it can't drift out of sync with real behavior.
+ * extractActionItems is exactly what lib/extraction.ts's
+ * runExtractionForTranscript() calls; we invoke it directly only to skip the
+ * DB write (the eval has no transcript rows to persist to), not to
+ * reimplement anything.
+ *
+ * Note on quota: this currently runs on the same GEMINI_API_KEY as
+ * production, so eval trials and real user traffic share one free-tier
+ * budget (20 requests/day per project per model) — a 12-call suite is 60% of
+ * a day. Isolating evals onto their own key is blocked for now: a
+ * newly-created project can't invoke gemini-2.5-flash at all (404, "no
+ * longer available to new users"), and testing a different model than
+ * production runs would defeat the point of the harness. lib/gemini.ts's
+ * apiKeyOverride parameter is left in place to re-point this at
+ * GEMINI_API_KEY_EVAL once that project is entitled to the model.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -88,10 +99,19 @@ function backoffDelayMs(attempt: number): number {
   return Math.round(window / 2 + Math.random() * (window / 2));
 }
 
+// Temporarily back on the production GEMINI_API_KEY. The separate eval
+// project (GEMINI_API_KEY_EVAL) can't invoke gemini-2.5-flash at all — it
+// 404s with "no longer available to new users", since that project is newer
+// than the model's cutoff, while the production project is grandfathered in.
+// Testing a different model would defeat the harness's whole premise, so we
+// accept sharing production's 20-request/day quota until the eval project
+// gets real gemini-2.5-flash entitlement; then pass
+// process.env.GEMINI_API_KEY_EVAL here again (the apiKeyOverride parameter
+// in lib/gemini.ts stays in place for exactly that).
 async function extractWithRateLimitRetry(text: string): Promise<ExtractedActionItem[]> {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await extractActionItems(text);
+      return await extractActionItems(text, process.env.GEMINI_API_KEY);
     } catch (err) {
       if (isRateLimit(err) && attempt < RATE_LIMIT_MAX_RETRIES) {
         const waitMs = backoffDelayMs(attempt);

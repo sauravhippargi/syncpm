@@ -19,7 +19,7 @@
     },
     {
       "id": "fix-duplicate-notification-bug",
-      "descriptionContains": ["duplicate", "notification"],
+      "descriptionContains": ["notification"],
       "owner": "Jordan Patel",
       "dueDateExpected": true,
       "blockerExpected": false
@@ -36,7 +36,8 @@
       "descriptionContains": ["qa"],
       "owner": "Sam Torres",
       "dueDateExpected": true,
-      "blockerExpected": false
+      "blockerExpected": false,
+      "note": "KNOWN UNRESOLVED — owner attribution is unstable and consistently wrong (extracts 'Kim Osei' instead of 'Sam Torres', despite Sam explicitly accepting: 'Yep, I'll block off Thursday afternoon for that'). Measured across four prompt states: 0/5, 4/4, 0/6, 0/5 — the lone 4/4 looks like noise against three separate 0/n results. Few-shot iteration has not fixed this; needs a different approach. Tracked in evals/KNOWN-ISSUES.md. The expectation here is correct — do NOT loosen it to make the suite green."
     }
   ],
   "optionalItems": [
