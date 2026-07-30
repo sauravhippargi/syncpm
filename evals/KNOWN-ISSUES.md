@@ -28,20 +28,65 @@ speaker rather than the person who accepts it.
 | v1 — + owner-binding few-shot example | 4/4 |
 | v2 — + resolved-dependency example | 0/6 |
 | v3 — + open-escalation blocker example | 0/5 |
+| v4 — + structural owner-attribution rule | 0/4 |
 
-The lone 4/4 stands against three separate 0/n results and is most likely
+The lone 4/4 stands against **four** separate 0/n results and is most likely
 noise, not a real fix. This is exactly why the harness reports a pass **rate**
 over multiple trials rather than a single pass/fail — a one-run "fix" here
 would have been a false positive.
 
-### Why it is still open
+### Root cause (confirmed by transcript read)
 
-Few-shot iteration has been tried and does not hold. Notably, the *same*
-worked-example approach **did** durably fix the blocker-routing problems
-(`escalate-twilio`, `wire-up-ui`, `full-qa-pass` blocker — all 5/5), so the
-technique works in general; owner attribution specifically does not respond to
-it. A different approach is needed — this is under separate investigation and
-should not be attacked with more few-shot examples.
+Cue 9 of `engineering-sprint-sync.vtt`:
+
+> Alex Rivera: Great. **Sam,** *once Kim's UI is ready Thursday,* **can you run a full QA pass** before we cut the release Friday morning?
+
+Sam is the addressee; Kim appears only inside a subordinate timing/possessive
+clause. But Kim's name sits *textually closer* to "QA pass" than Sam's does.
+The model is binding on proximity to the task keyword rather than on who is
+being addressed.
+
+### Why instruction-space is considered exhausted
+
+Two distinct approaches have now failed:
+
+1. **Few-shot examples** (v1–v3) — did not hold across runs.
+2. **A structural rule** (v4) — an explicit procedural instruction stating
+   that the addressee outranks every other name in the sentence, that the
+   second-person pronoun resolves to the addressee, and that names inside
+   timing/possessive/conditional clauses are never owners.
+
+The v4 test was run under **maximally favorable, arguably invalid** conditions:
+at the time, the rule's own illustrations used the fixture's literal wording —
+a verbatim vocative example (`"Sam, can you run the QA pass?"`) and a verbatim
+non-owner example (`"once Kim's UI is ready"`). The model was effectively
+handed the answer to this exact sentence, in these exact words, **and still
+answered Kim in 4/4 trials.**
+
+That is decisive negative evidence. It rules out a definitional gap, a missing
+example, and insufficient instruction specificity. More prompt text is not the
+lever here.
+
+(Those fixture-specific illustrations have since been replaced with generic
+placeholders — the production prompt must not reference eval content. The rule
+itself was kept: it is defensible guidance and caused **zero regressions**,
+with all three blocker checks holding at 4/4.)
+
+Notably, the *same* worked-example technique **did** durably fix the
+blocker-routing problems (`escalate-twilio`, `wire-up-ui`, `full-qa-pass`
+blocker — all 5/5), so the technique works in general. Owner attribution
+specifically does not respond to it.
+
+### Next lever under consideration — not implemented
+
+A **structural schema change**: an evidence-grounded output field (e.g.
+`ownerEvidence`) requiring the model to emit the exact quote that assigns the
+owner, forcing the vocative binding to be explicit rather than implicit.
+
+This is **not implemented and not scheduled**. It changes the extraction
+schema, which touches the production path, so it needs to be scoped as its own
+design decision — not folded into a prompt-tuning pass. Do not attempt further
+instruction or few-shot fixes for this bug in the meantime.
 
 ### What is NOT the problem
 
