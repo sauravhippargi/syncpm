@@ -78,16 +78,33 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // retry-storm problem documented in GEMINI-QUOTA-NOTES.md). Growing the wait
 // each time lets the per-minute window actually clear, and a hard retry cap
 // means a genuinely exhausted (daily) window fails out in bounded time instead
-// of being hammered indefinitely. Only rate-limit errors are retried — a real
+// of being hammered indefinitely. Only *transient* errors are retried — a real
 // extraction/schema failure should surface, not be masked.
-const RATE_LIMIT_MAX_RETRIES = Number(process.env.EVAL_MAX_RETRIES) || 4;
+const TRANSIENT_MAX_RETRIES = Number(process.env.EVAL_MAX_RETRIES) || 4;
 const BACKOFF_BASE_MS = Number(process.env.EVAL_BACKOFF_BASE_MS) || 20000;
 const BACKOFF_CAP_MS = Number(process.env.EVAL_BACKOFF_CAP_MS) || 80000;
 
-function isRateLimit(err: unknown): boolean {
+type TransientKind = "rate-limit" | "unavailable";
+
+// Two different transient failures, both worth retrying, deliberately kept
+// distinguishable rather than collapsed into one boolean — they mean opposite
+// things about a run. A 429 is OUR quota: the fix is to wait for our window to
+// clear, and seeing them means the pacing is too aggressive. A 503/UNAVAILABLE
+// is GOOGLE's capacity — nothing about our request caused it and no amount of
+// pacing prevents it, we're just waiting out a demand spike. Reading "backing
+// off" in a log and not knowing which one happened would send anyone tuning
+// EVAL_DELAY_MS after a problem that was never theirs.
+function transientKind(err: unknown): TransientKind | null {
   const msg = err instanceof Error ? err.message : String(err);
-  return /rate limit|429/i.test(msg);
+  if (/rate limit|429/i.test(msg)) return "rate-limit";
+  if (/\b503\b|unavailable/i.test(msg)) return "unavailable";
+  return null;
 }
+
+const TRANSIENT_LABEL: Record<TransientKind, string> = {
+  "rate-limit": "rate-limited (429, our quota)",
+  unavailable: "model unavailable (503, Google-side demand)",
+};
 
 // Equal-jitter exponential backoff: half the (capped, doubling) window is
 // guaranteed and half is randomized. Full jitter can return a near-zero wait,
@@ -108,15 +125,16 @@ function backoffDelayMs(attempt: number): number {
 // gets real gemini-2.5-flash entitlement; then pass
 // process.env.GEMINI_API_KEY_EVAL here again (the apiKeyOverride parameter
 // in lib/gemini.ts stays in place for exactly that).
-async function extractWithRateLimitRetry(text: string): Promise<ExtractedActionItem[]> {
+async function extractWithTransientRetry(text: string): Promise<ExtractedActionItem[]> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await extractActionItems(text, process.env.GEMINI_API_KEY);
     } catch (err) {
-      if (isRateLimit(err) && attempt < RATE_LIMIT_MAX_RETRIES) {
+      const kind = transientKind(err);
+      if (kind && attempt < TRANSIENT_MAX_RETRIES) {
         const waitMs = backoffDelayMs(attempt);
         console.log(
-          `       (rate-limited — backing off ${(waitMs / 1000).toFixed(1)}s, retry ${attempt + 1}/${RATE_LIMIT_MAX_RETRIES})`
+          `       (${TRANSIENT_LABEL[kind]} — backing off ${(waitMs / 1000).toFixed(1)}s, retry ${attempt + 1}/${TRANSIENT_MAX_RETRIES})`
         );
         await sleep(waitMs);
         continue;
@@ -189,12 +207,27 @@ async function main() {
     for (let t = 0; t < TRIALS; t++) {
       let items: ExtractedActionItem[];
       try {
-        items = await extractWithRateLimitRetry(transcript);
+        items = await extractWithTransientRetry(transcript);
       } catch (err) {
         console.log(`  Trial ${t + 1}/${TRIALS}: ERROR — ${err instanceof Error ? err.message : String(err)}`);
         suiteTotalTrials++;
         if (t < TRIALS - 1) await sleep(DELAY_BETWEEN_CALLS_MS);
         continue;
+      }
+
+      // Opt-in dump of what the model literally returned. The normal report is
+      // a scoreboard — pass rates and fail reasons — which is the right default
+      // but can't answer "is this new field actually coming back, and what's in
+      // it?". Gated so inspecting a schema change costs the same one call as
+      // scoring it, rather than a second run to see the raw output.
+      if (process.env.EVAL_DUMP_ITEMS) {
+        console.log(`       raw items (${items.length}):`);
+        items.forEach((it, i) => {
+          console.log(`         ${i + 1}. ${it.description}`);
+          console.log(`            owner:         ${it.owner ?? "(null)"}`);
+          console.log(`            dueDate:       ${it.dueDate ?? "(null)"}`);
+          console.log(`            blockerNote:   ${it.blockerNote ?? "(null)"}`);
+        });
       }
 
       const result = runTrial(fixture, items);
@@ -216,6 +249,7 @@ async function main() {
         }
         for (const leak of result.forbiddenLeaks) console.log(`       ✗ FORBIDDEN leaked: ${leak}`);
         for (const v of result.optionalViolations) console.log(`       ✗ optional constraint: ${v}`);
+        for (const c of result.matchCollisions) console.log(`       ✗ MATCH COLLISION: ${c}`);
       }
 
       if (t < TRIALS - 1) await sleep(DELAY_BETWEEN_CALLS_MS);
@@ -228,6 +262,10 @@ async function main() {
         const perTrial = trials.map((tr) => tr.expected.find((e) => e.id === exp.id)!);
         const foundN = perTrial.filter((e) => e.found).length;
         const passN = perTrial.filter((e) => e.pass).length;
+        // Called out separately from "found" — an ambiguous expectation is a
+        // fixture defect, not a model miss, and the two must not blur together
+        // in the summary line.
+        const ambiguousN = perTrial.filter((e) => e.ambiguous).length;
         // Per-check pass counts, only for checks this item actually declares.
         const checkLabels = perTrial[0].checks.map((c) => c.label);
         const checkSummary = checkLabels
@@ -239,6 +277,7 @@ async function main() {
         console.log(
           `     ${exp.id.padEnd(34, ".")} found ${foundN}/${trials.length}` +
             `, fully-correct ${passN}/${trials.length}` +
+            (ambiguousN > 0 ? `, AMBIGUOUS ${ambiguousN}/${trials.length}` : "") +
             (checkSummary ? `  (${checkSummary})` : "")
         );
       }

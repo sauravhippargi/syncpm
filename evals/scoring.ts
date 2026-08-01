@@ -64,11 +64,46 @@ export function hasBlocker(item: ExtractedActionItem): boolean {
   return item.blockerNote != null && item.blockerNote.trim() !== "";
 }
 
+export function findMatches(
+  items: ExtractedActionItem[],
+  keywords: string[]
+): ExtractedActionItem[] {
+  return items.filter((it) => hasAllKeywords(it.description, keywords));
+}
+
+export interface MatchOutcome {
+  match?: ExtractedActionItem; // set only when exactly one item matched
+  matches: ExtractedActionItem[];
+  ambiguous: boolean;
+}
+
+// Identity matching must resolve to exactly ONE item — being merely present is
+// not enough. This used to be `items.find(...)`, i.e. first-match-wins, which
+// fails silently and in both directions as descriptions drift: an expectation
+// whose keywords also hit an earlier, unrelated item scores THAT item instead,
+// producing a false failure (the real item was extracted correctly) or a false
+// pass (the wrong item happens to satisfy the checks). Both were observed on
+// engineering-sprint-sync. A keyword set that no longer pins down one item is
+// a defect in the fixture, so it is now reported rather than resolved by
+// array order.
 export function findMatch(
   items: ExtractedActionItem[],
   keywords: string[]
-): ExtractedActionItem | undefined {
-  return items.find((it) => hasAllKeywords(it.description, keywords));
+): MatchOutcome {
+  const matches = findMatches(items, keywords);
+  return {
+    match: matches.length === 1 ? matches[0] : undefined,
+    matches,
+    ambiguous: matches.length > 1,
+  };
+}
+
+function ambiguityReason(keywords: string[], matches: ExtractedActionItem[]): string {
+  return (
+    `AMBIGUOUS_MATCH: [${keywords.join(", ")}] matched ${matches.length} extracted items — ` +
+    matches.map((m) => `"${m.description}"`).join(" | ") +
+    " — fixture keywords must identify exactly one item; tighten them (identity matching only, never the expected values)"
+  );
 }
 
 // ---- Per-trial scoring -----------------------------------------------------
@@ -80,7 +115,8 @@ export interface CheckResult {
 
 export interface ExpectedResult {
   id: string;
-  found: boolean;
+  found: boolean; // true only on a UNIQUE match — an ambiguous one isn't identified
+  ambiguous: boolean;
   checks: CheckResult[];
   pass: boolean;
   failReasons: string[];
@@ -90,6 +126,9 @@ export interface TrialResult {
   expected: ExpectedResult[];
   forbiddenLeaks: string[];
   optionalViolations: string[];
+  // Two expectations resolving to the same extracted item — the other half of
+  // the substring-collision problem, invisible to the per-expectation check.
+  matchCollisions: string[];
   pass: boolean;
 }
 
@@ -97,12 +136,19 @@ export function scoreExpected(
   item: ExpectedItem,
   extracted: ExtractedActionItem[]
 ): ExpectedResult {
-  const match = findMatch(extracted, item.descriptionContains);
+  const { match, matches, ambiguous } = findMatch(extracted, item.descriptionContains);
   const found = match !== undefined;
   const checks: CheckResult[] = [];
   const failReasons: string[] = [];
 
-  if (!found) {
+  // Ambiguity and absence are different defects and must not read the same in
+  // the report: "not found" points at the model, AMBIGUOUS_MATCH points at the
+  // fixture. Every field check below is guarded on `found`, so an ambiguous
+  // expectation records its checks as failed without inventing field-level
+  // reasons about an item we can't confidently say we're looking at.
+  if (ambiguous) {
+    failReasons.push(ambiguityReason(item.descriptionContains, matches));
+  } else if (!found) {
     failReasons.push(`not found (needed all of: ${item.descriptionContains.join(", ")})`);
   }
 
@@ -149,7 +195,7 @@ export function scoreExpected(
   }
 
   const pass = found && checks.every((c) => c.ok);
-  return { id: item.id, found, checks, pass, failReasons };
+  return { id: item.id, found, ambiguous, checks, pass, failReasons };
 }
 
 // Optional items are never penalized for presence OR absence — but IF extracted,
@@ -160,7 +206,11 @@ export function scoreOptional(
   item: ExpectedItem,
   extracted: ExtractedActionItem[]
 ): string | null {
-  const match = findMatch(extracted, item.descriptionContains);
+  const { match, matches, ambiguous } = findMatch(extracted, item.descriptionContains);
+  // Absence is fine for an optional item; not knowing WHICH item it is isn't.
+  // Silently skipping here would mean a real constraint violation could hide
+  // behind a keyword set that got sloppier over time.
+  if (ambiguous) return `${item.id}: ${ambiguityReason(item.descriptionContains, matches)}`;
   if (!match) return null;
 
   if (item.ownerExpected === null && norm(match.owner ?? "") !== "") {
@@ -175,9 +225,12 @@ export function scoreOptional(
 export function runTrial(fixture: Fixture, extracted: ExtractedActionItem[]): TrialResult {
   const expected = fixture.expectedItems.map((e) => scoreExpected(e, extracted));
 
+  // Forbidden items are the one place multiplicity isn't ambiguity — two
+  // matches is two leaks, not an unidentifiable item — so presence is still
+  // the whole question here.
   const forbiddenLeaks: string[] = [];
   for (const f of fixture.forbiddenItems ?? []) {
-    if (findMatch(extracted, f.descriptionContains)) {
+    if (findMatches(extracted, f.descriptionContains).length > 0) {
       forbiddenLeaks.push(`[${f.descriptionContains.join(", ")}] — ${f.reason}`);
     }
   }
@@ -188,10 +241,34 @@ export function runTrial(fixture: Fixture, extracted: ExtractedActionItem[]): Tr
     if (violation) optionalViolations.push(violation);
   }
 
+  // The mirror image of AMBIGUOUS_MATCH: each expectation resolves uniquely,
+  // but two of them land on the SAME extracted item. Both then score that one
+  // item, so one of them is measuring something it was never written for — and
+  // it can pass while doing so, which is how a false pass survives review. Only
+  // unique matches are compared; an ambiguous expectation already reported.
+  const matchCollisions: string[] = [];
+  const byDescription = new Map<string, string[]>();
+  for (const [i, result] of expected.entries()) {
+    const match = findMatch(extracted, fixture.expectedItems[i].descriptionContains).match;
+    if (!match) continue;
+    const ids = byDescription.get(match.description) ?? [];
+    ids.push(result.id);
+    byDescription.set(match.description, ids);
+  }
+  for (const [description, ids] of byDescription) {
+    if (ids.length > 1) {
+      matchCollisions.push(
+        `${ids.join(" + ")} both resolved to the same extracted item "${description}" — ` +
+          "at most one of them can be measuring the right thing"
+      );
+    }
+  }
+
   const pass =
     expected.every((e) => e.pass) &&
+    matchCollisions.length === 0 &&
     forbiddenLeaks.length === 0 &&
     optionalViolations.length === 0;
 
-  return { expected, forbiddenLeaks, optionalViolations, pass };
+  return { expected, forbiddenLeaks, optionalViolations, matchCollisions, pass };
 }

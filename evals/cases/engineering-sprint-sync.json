@@ -19,7 +19,7 @@
     },
     {
       "id": "fix-duplicate-notification-bug",
-      "descriptionContains": ["notification"],
+      "descriptionContains": ["notification", "bug"],
       "owner": "Jordan Patel",
       "dueDateExpected": true,
       "blockerExpected": false
@@ -33,11 +33,11 @@
     },
     {
       "id": "full-qa-pass",
-      "descriptionContains": ["qa"],
+      "descriptionContains": ["qa", "pass"],
       "owner": "Sam Torres",
       "dueDateExpected": true,
       "blockerExpected": false,
-      "note": "KNOWN UNRESOLVED — owner attribution is unstable and consistently wrong (extracts 'Kim Osei' instead of 'Sam Torres', despite Sam explicitly accepting: 'Yep, I'll block off Thursday afternoon for that'). Measured across four prompt states: 0/5, 4/4, 0/6, 0/5 — the lone 4/4 looks like noise against three separate 0/n results. Few-shot iteration has not fixed this; needs a different approach. Tracked in evals/KNOWN-ISSUES.md. The expectation here is correct — do NOT loosen it to make the suite green."
+      "note": "RESOLVED — was a harness bug, never a model bug. This expectation matched on ['qa'] alone, which also matched the wire-up item ('...ready for QA'); first-match-wins scored that row instead and reported its owner (Kim Osei) as this item's. The model attributes the QA pass to Sam Torres correctly, citing cue 9 verbatim. Owner is 5/5 both with and without the ownerEvidence prompt. Keywords must stay unique to this item — ['qa'] alone silently reads the wire-up row. See evals/KNOWN-ISSUES.md sections 1 and 2. The expectation itself was always correct — do NOT loosen it to make the suite green."
     }
   ],
   "optionalItems": [
