@@ -18,6 +18,7 @@ export async function runExtractionForTranscript(
           transcriptId,
           description: item.description,
           owner: item.owner,
+          ownerEvidence: item.ownerEvidence,
           dueDate: item.dueDate ? new Date(item.dueDate) : null,
           blockerNote: item.blockerNote,
         },

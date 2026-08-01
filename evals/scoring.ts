@@ -12,6 +12,12 @@ export interface ExpectedItem {
   id: string;
   descriptionContains: string[]; // ALL must appear — this is how we identify the item (recall)
   owner?: string; // exact-match expectation
+  // Whether a non-empty ownerEvidence quote must accompany that owner (prd.md
+  // 6.2a). Only consulted when `owner` is set, and defaults to true there —
+  // an owner is never supposed to survive extraction without one, so fixtures
+  // opt in by simply naming an owner. Set false only to deliberately exempt a
+  // case; it is never a reason to loosen the `owner` expectation itself.
+  ownerEvidenceExpected?: boolean;
   ownerExpected?: null; // optional-item constraint: must NOT be a named owner
   dueDateExpected?: boolean; // presence/absence, not exact value
   blockerExpected?: boolean; // presence/absence of a non-empty blocker note
@@ -62,6 +68,13 @@ export function hasDueDate(item: ExtractedActionItem): boolean {
 
 export function hasBlocker(item: ExtractedActionItem): boolean {
   return item.blockerNote != null && item.blockerNote.trim() !== "";
+}
+
+// Presence-only, like hasDueDate/hasBlocker — the quote's *wording* isn't
+// scored, since any verbatim phrase that names the person is a valid
+// citation and pinning exact text would measure phrasing, not correctness.
+export function hasOwnerEvidence(item: ExtractedActionItem): boolean {
+  return item.ownerEvidence != null && item.ownerEvidence.trim() !== "";
 }
 
 export function findMatches(
@@ -157,6 +170,22 @@ export function scoreExpected(
     checks.push({ label: "owner", ok });
     if (found && !ok) {
       failReasons.push(`owner: expected "${item.owner}", got "${match!.owner ?? "(none)"}"`);
+    }
+  }
+
+  // Additive check (prd.md 6.2a) — it never changes what owner value is
+  // expected, only that whatever owner IS extracted came with a citation.
+  // validateExtractionResult already drops an uncited owner to null, so in
+  // practice this fails alongside the owner check rather than alone; scoring
+  // it separately is what makes the *reason* visible in the report ("the
+  // model had no quote") instead of just "owner: got (none)".
+  if (item.owner !== undefined && (item.ownerEvidenceExpected ?? true)) {
+    const ok = found && hasOwnerEvidence(match!);
+    checks.push({ label: "ownerEvidence", ok });
+    if (found && !ok) {
+      failReasons.push(
+        `ownerEvidence: expected a supporting transcript quote for owner "${item.owner}", got none`
+      );
     }
   }
 

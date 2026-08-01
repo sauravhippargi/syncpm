@@ -225,6 +225,7 @@ async function main() {
         items.forEach((it, i) => {
           console.log(`         ${i + 1}. ${it.description}`);
           console.log(`            owner:         ${it.owner ?? "(null)"}`);
+          console.log(`            ownerEvidence: ${it.ownerEvidence ?? "(null)"}`);
           console.log(`            dueDate:       ${it.dueDate ?? "(null)"}`);
           console.log(`            blockerNote:   ${it.blockerNote ?? "(null)"}`);
         });

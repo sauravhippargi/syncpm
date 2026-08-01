@@ -151,6 +151,7 @@ function DeadlineRow({
           status: item.status,
           blockerNote: item.blockerNote,
         }}
+        ownerEvidence={item.ownerEvidence}
         onSaved={(patch) => onSaved(item.id, patch)}
       />
     </li>

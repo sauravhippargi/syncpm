@@ -41,6 +41,7 @@ export default async function DeadlinesPage() {
     id: item.id,
     description: item.description,
     owner: item.owner,
+    ownerEvidence: item.ownerEvidence,
     dueDate: item.dueDate!.toISOString(),
     status: item.status,
     blockerNote: item.blockerNote,

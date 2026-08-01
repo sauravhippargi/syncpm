@@ -54,7 +54,19 @@ export async function PATCH(
 
   const data: Record<string, unknown> = {};
   if (body.description !== undefined) data.description = body.description;
-  if (body.owner !== undefined) data.owner = body.owner;
+  if (body.owner !== undefined) {
+    data.owner = body.owner;
+    // A quote only ever justifies the owner extraction itself produced. The
+    // moment a reviewer picks a different name — or clears the field — the
+    // citation no longer supports what's stored, so it's dropped here rather
+    // than left in the row to resurface on the next load under an owner it
+    // doesn't name (prd.md 6.2a). An owner PATCHed to its existing value
+    // (e.g. Review & Edit's Save, which sends every field of every checked
+    // item) isn't a change and keeps its quote.
+    const nextOwner = body.owner?.trim() || null;
+    const currentOwner = existing.owner?.trim() || null;
+    if (nextOwner !== currentOwner) data.ownerEvidence = null;
+  }
   if (body.dueDate !== undefined) {
     data.dueDate = body.dueDate ? new Date(body.dueDate) : null;
   }

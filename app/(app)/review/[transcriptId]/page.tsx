@@ -33,6 +33,7 @@ export default async function ReviewPage({
     id: item.id,
     description: item.description,
     owner: item.owner,
+    ownerEvidence: item.ownerEvidence,
     dueDate: item.dueDate ? item.dueDate.toISOString() : null,
     status: item.status,
     blockerNote: item.blockerNote,
