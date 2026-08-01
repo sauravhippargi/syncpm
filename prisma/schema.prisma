@@ -74,7 +74,13 @@ model ActionItem {
   transcriptId  String    @map("transcript_id")
   description   String
   owner         String?
-  ownerEvidence String?   @map("owner_evidence") // exact transcript quote justifying `owner` — null whenever owner is null (prd.md 6.2a)
+  // Exact transcript quote justifying `owner` (prd.md 6.2a). All-or-nothing with
+  // `owner` as written by extraction (validateExtractionResult enforces it), but
+  // owner-without-evidence is a legitimate post-edit state: the PATCH route
+  // clears this when a reviewer changes the owner and never repopulates it, and
+  // a human-set owner needs no model citation — don't backfill those. Evidence
+  // with no owner is invalid at any time.
+  ownerEvidence String?   @map("owner_evidence")
   dueDate       DateTime? @map("due_date")
   status        String    @default("open") // "open" | "done"
   blockerNote   String?   @map("blocker_note") // non-empty value is what makes an item a blocker — no separate boolean

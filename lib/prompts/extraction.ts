@@ -5,9 +5,19 @@
 export interface ExtractedActionItem {
   description: string;
   owner: string | null;
-  // The exact transcript quote justifying `owner` (prd.md 6.2a). Always null
-  // when `owner` is null, and never null when `owner` isn't — an owner with
-  // no supporting quote is rejected in validateExtractionResult below.
+  // The exact transcript quote justifying `owner` (prd.md 6.2a). All-or-nothing
+  // with `owner` AS WRITTEN BY EXTRACTION — validateExtractionResult below
+  // rejects an owner with no supporting quote, so a freshly-extracted item has
+  // either both fields set or neither.
+  //
+  // That invariant does NOT describe a stored row after a human edit. The PATCH
+  // route (app/api/action-items/[id]/route.ts) clears owner_evidence when a
+  // reviewer changes the owner and never repopulates it, so owner-without-
+  // evidence is a legitimate persisted state — a human-set owner needs no model
+  // citation. Do not "fix" such rows by backfilling evidence.
+  //
+  // Invalid anywhere, at any time: evidence with no owner. A quote that isn't
+  // supporting an owner is evidence for nothing.
   ownerEvidence: string | null;
   dueDate: string | null; // ISO 8601 date (YYYY-MM-DD)
   blockerNote: string | null; // non-empty value is what makes this a blocker
