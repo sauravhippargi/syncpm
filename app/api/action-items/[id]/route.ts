@@ -58,11 +58,20 @@ export async function PATCH(
     data.owner = body.owner;
     // A quote only ever justifies the owner extraction itself produced. The
     // moment a reviewer picks a different name — or clears the field — the
-    // citation no longer supports what's stored, so it's dropped here rather
-    // than left in the row to resurface on the next load under an owner it
-    // doesn't name (prd.md 6.2a). An owner PATCHed to its existing value
-    // (e.g. Review & Edit's Save, which sends every field of every checked
-    // item) isn't a change and keeps its quote.
+    // citation no longer supports what's stored, so it's dropped (prd.md
+    // 6.2a). An owner PATCHed to its existing value (e.g. Review & Edit's
+    // Save, which sends every field of every checked item) isn't a change and
+    // keeps its quote.
+    //
+    // DELIBERATELY RETAINED, not dead code. owner_evidence has no read path in
+    // the app — Owner Evidence is non-visual (prd.md 6.2a), so this branch's
+    // effect is observable only by querying the table directly. It stays
+    // because it keeps the stored invariant true: no row ever carries a quote
+    // paired with a human-chosen owner. Anything that reads the column later —
+    // a re-surfaced UI, an export, an audit query — inherits honest data
+    // instead of silently wrong data with no signal it happened. Losing a
+    // quote is the safe direction to fail; see evals/KNOWN-ISSUES.md section 3
+    // for the accepted cost.
     const nextOwner = body.owner?.trim() || null;
     const currentOwner = existing.owner?.trim() || null;
     if (nextOwner !== currentOwner) data.ownerEvidence = null;

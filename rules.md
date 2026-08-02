@@ -56,7 +56,7 @@
 
 ## 5. Boundaries for Claude Code (the build agent)
 
-- **Never edit `prd.md`, `architecture.md`, `rules.md`, `phases.md`, or `design.md` directly** — these are maintained in a separate planning conversation. If something in the codebase conflicts with what's written there, flag it clearly in your response instead of editing the file yourself.
+- **Never edit `prd.md`, `architecture.md`, `rules.md`, `phases.md`, or `design.md` directly** — these are maintained in a separate planning conversation. If something in the codebase conflicts with what's written there, flag it clearly in your response instead of editing the file yourself. **This bars authorship, not version control**: if I've swapped in updated copies of these files and explicitly ask you to commit them, staging and committing them is fine and doesn't need to be flagged as a rule exception. Read them first to confirm they say what I claim, then commit them unmodified.
 - Don't add a new npm package without flagging it first — check it against the "Avoid" list above before installing
 - Don't invent new database tables/fields without also updating `architecture.md` to match
 - Don't restructure the folder layout defined in `architecture.md` without discussing it first
