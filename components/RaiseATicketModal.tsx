@@ -55,7 +55,6 @@ export function findBestAssigneeMatch(
 // call this modal made.
 export default function RaiseATicketModal({
   actionItemId,
-  ownerEvidence,
   blockerNote,
   jiraConnection,
   projects,
@@ -71,11 +70,6 @@ export default function RaiseATicketModal({
   onCreated,
 }: {
   actionItemId: string;
-  // The quote behind the extracted owner the assignee was matched from
-  // (prd.md 6.2a/6.4) — this is the one place a wrong owner turns into a real
-  // external action, so the reviewer gets something concrete to check the
-  // pre-selected name against.
-  ownerEvidence: string | null;
   blockerNote: string | null;
   jiraConnection: JiraConnectionSummary | null;
   projects: JiraProject[] | null;
@@ -237,21 +231,6 @@ export default function RaiseATicketModal({
                       </option>
                     ))}
                   </select>
-
-                  {/* Sits directly under the assignee dropdown and matches
-                      its width, rather than spanning the assignee+priority
-                      row — this box is about the assignee guess alone
-                      (mockup section 2). Only rendered when a quote exists;
-                      an empty labelled box would imply the guess was checked
-                      against something when it wasn't (prd.md 6.2a/6.4). */}
-                  {ownerEvidence && (
-                    <div className="w-56 rounded-[6px] border-l-2 border-accent bg-page px-2.5 py-2 text-[11.5px] leading-[1.4] text-text-secondary">
-                      <span className="mb-[3px] block text-[10px] font-semibold uppercase tracking-[0.03em] text-text-muted">
-                        Why this assignee
-                      </span>
-                      &ldquo;{ownerEvidence}&rdquo;
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -274,7 +253,7 @@ export default function RaiseATicketModal({
                     ))}
                   </select>
                 </div>
-            </div>
+              </div>
             )}
           </div>
         )}

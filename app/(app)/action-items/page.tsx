@@ -34,7 +34,6 @@ export default async function ActionItemsPage() {
       id: item.id,
       description: item.description,
       owner: item.owner,
-      ownerEvidence: item.ownerEvidence,
       dueDate: item.dueDate ? item.dueDate.toISOString() : null,
       status: item.status,
       blockerNote: item.blockerNote,

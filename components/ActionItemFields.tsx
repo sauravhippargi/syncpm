@@ -60,16 +60,11 @@ async function defaultPersist(
 export default function ActionItemFields({
   actionItemId,
   value,
-  ownerEvidence,
   onSaved,
   persist,
 }: {
   actionItemId: string;
   value: ActionItemFieldsValue;
-  // The model's supporting quote for `value.owner` (prd.md 6.2a). Read-only —
-  // it justifies what extraction produced, so it's deliberately not part of
-  // ActionItemFieldsValue/Patch (nothing here ever edits or persists it).
-  ownerEvidence?: string | null;
   onSaved: (patch: ActionItemFieldsPatch) => void;
   persist?: (
     patch: ActionItemFieldsPatch
@@ -170,18 +165,6 @@ export default function ActionItemFields({
 
   const anyError = ownerError || dueDateError || statusError || blockerError;
 
-  // The quote only justifies the owner extraction actually produced. Once a
-  // reviewer types a different name, it no longer supports what's on screen,
-  // so it's hidden rather than left sitting under someone it doesn't name —
-  // the exact mis-pairing 6.2a exists to prevent. The PATCH route clears the
-  // stored quote on the same condition, so this is what covers the window
-  // before that lands — and Review & Edit, where field edits are local until
-  // the page-level Save. The baseline is captured once at mount via useState
-  // rather than a ref, since it's read during render.
-  const [extractedOwner] = useState((value.owner ?? "").trim());
-  const showEvidence =
-    !!owner.trim() && !!ownerEvidence && owner.trim() === extractedOwner;
-
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-1.5">
@@ -222,28 +205,6 @@ export default function ActionItemFields({
           className="h-7 w-44 rounded-[6px] border border-warning-tint bg-card px-2 text-[12px] text-text-primary outline-none focus:border-warning disabled:opacity-50"
         />
       </div>
-
-      {/* Owner evidence (prd.md 6.2a) — a caption a reviewer can glance at,
-          never a gate. When there's no owner at all, the empty owner field
-          says nothing about *why*; this says it was dropped for lack of a
-          supporting quote rather than simply never filled in. */}
-      {showEvidence ? (
-        <p className="max-w-[280px] text-[11px] italic leading-[1.35] text-text-muted">
-          {/* The mockup's lighter quote glyphs (#C7CDD6) — expressed as a
-              lighter tone of text-muted rather than a one-off hex, which
-              resolves to within a hair of that value on white. */}
-          <span className="not-italic opacity-60">&ldquo;</span>
-          {ownerEvidence}
-          <span className="not-italic opacity-60">&rdquo;</span>
-        </p>
-      ) : (
-        !owner.trim() && (
-          <span className="self-start rounded-full bg-warning-tint px-2 py-0.5 text-[11px] text-warning-text">
-            No owner — no supporting quote found
-          </span>
-        )
-      )}
-
       {anyError && (
         <div className="flex flex-col gap-0.5">
           {ownerError && <p className="text-[11px] font-medium text-danger">{ownerError}</p>}

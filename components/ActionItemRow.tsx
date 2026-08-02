@@ -14,7 +14,6 @@ export interface ActionItemRowData {
   id: string;
   description: string;
   owner: string | null;
-  ownerEvidence: string | null; // supporting transcript quote for `owner` (prd.md 6.2a)
   dueDate: string | null;
   status: string;
   blockerNote: string | null;
@@ -87,7 +86,6 @@ export default function ActionItemRow({
           status: item.status,
           blockerNote: item.blockerNote,
         }}
-        ownerEvidence={item.ownerEvidence}
         onSaved={onSaved}
       />
 
@@ -95,7 +93,6 @@ export default function ActionItemRow({
         <JiraSyncButton
           actionItemId={item.id}
           owner={item.owner}
-          ownerEvidence={item.ownerEvidence}
           blockerNote={item.blockerNote}
           jiraConnection={jiraConnection}
           initialSync={item.jiraSync}

@@ -244,30 +244,40 @@ either if it ever collides, which is the safe state to leave them in.
 
 ---
 
-## 3. Owner-evidence caption after a same-session owner revert — WON'T FIX
+## 3. `owner_evidence` lost on an owner revert — WON'T FIX (now data-only)
 
-**Scope:** UI only (`components/ActionItemFields.tsx` +
-`app/api/action-items/[id]/route.ts`). Not an extraction problem, so the eval
-suite does not cover it — recorded here because this is where the project's
-accepted-limitation list lives.
+**Scope:** stored data only (`app/api/action-items/[id]/route.ts`). Not an
+extraction problem, so the eval suite does not cover it — recorded here because
+this is where the project's accepted-limitation list lives.
 
-Editing an owner clears `owner_evidence` in the DB (PATCH route), since a quote
-never supports a name the model didn't pick. The caption is independently
-hidden client-side the moment the field diverges from the extracted value.
+Editing an owner clears `owner_evidence` in the PATCH route, since a quote never
+supports a name the model didn't pick.
 
-**The gap:** change an owner and then change it *back* to the original name
-within the same session, and the caption reappears — the client compares
-against the owner captured at mount, which now matches again — but the stored
-quote was already cleared by the first edit, so it will not survive a reload.
-For that one window, the UI shows a citation the database no longer holds.
+**The gap:** change an owner and then change it *back* to the original name, and
+the row keeps that owner with `owner_evidence` permanently null. The first edit
+destroyed the quote; nothing repopulates it. The row is now indistinguishable
+from one whose owner was typed in from scratch.
 
-**This is a deliberate decision not to fix, not an oversight.** Closing it
-means either keeping the cleared quote server-side to re-attach on an exact
-revert, or round-tripping the row after every owner PATCH — real machinery for
-a transient, self-correcting display state that costs a reader nothing. The
-failure mode this whole feature exists to prevent (a quote shown under an owner
-it does not name) does not occur here: the caption only reappears when the
-owner matches the quote again. Revisit only if reverts turn out to be common.
+**No longer user-visible.** This section previously described a caption that
+briefly reappeared client-side while the stored quote was already gone. Owner
+Evidence is deliberately non-visual now (prd.md 6.2a) — the caption, the pill,
+and the ticket-modal evidence box were all removed as clutter — so there is no
+display to be inconsistent with. The remaining effect is entirely in the
+database: a recoverable quote is discarded, and no user ever sees the
+difference.
+
+**Still a deliberate decision not to fix.** Closing it means keeping the cleared
+quote server-side to re-attach on an exact revert — real machinery to preserve a
+value nothing currently reads (see the note in section 2 of this file's
+companion analysis: `owner_evidence` has no read path in the app today). The
+invariant that matters still holds: no row ever carries a quote under an owner
+that quote doesn't name. Losing a quote is the safe direction to fail.
+
+**Observed in real data.** On the first production upload, the accessibility-audit
+item ended up with owner "Kim Osei" and `owner_evidence` null — the state this
+section describes, most likely produced by clearing the owner during a UI test
+and typing it back. Worth knowing when reading the table directly: an
+owner-without-quote row does not imply extraction failed to cite one.
 
 ---
 

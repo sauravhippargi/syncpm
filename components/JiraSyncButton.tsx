@@ -25,14 +25,12 @@ export interface JiraConnectionSummary {
 export default function JiraSyncButton({
   actionItemId,
   owner,
-  ownerEvidence,
   blockerNote,
   jiraConnection,
   initialSync,
 }: {
   actionItemId: string;
   owner: string | null;
-  ownerEvidence: string | null;
   blockerNote: string | null;
   jiraConnection: JiraConnectionSummary | null;
   initialSync: JiraSyncState | null;
@@ -186,7 +184,6 @@ export default function JiraSyncButton({
       {modalOpen && (
         <RaiseATicketModal
           actionItemId={actionItemId}
-          ownerEvidence={ownerEvidence}
           blockerNote={blockerNote}
           jiraConnection={jiraConnection}
           projects={projects}
