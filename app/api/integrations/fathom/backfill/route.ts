@@ -7,7 +7,7 @@ import {
   FathomRequestError,
   listRecentMeetings,
 } from "@/lib/fathom";
-import { normalizeTranscript } from "@/lib/transcript";
+import { isEmptyTranscriptText, normalizeTranscript } from "@/lib/transcript";
 import { runExtractionForTranscript } from "@/lib/extraction";
 
 // Same Vercel Hobby timeout consideration as /api/extract and the Fathom
@@ -43,7 +43,14 @@ export async function POST() {
   try {
     const meetings = await listRecentMeetings(connection.apiKey, since);
 
+    // Per-meeting outcomes, not a single `imported` total (rules.md §2) — a
+    // run where every extraction failed used to report exactly the same
+    // number as a run where every one succeeded.
     let imported = 0;
+    let failed = 0;
+    let skippedEmpty = 0;
+    let skippedFetchFailed = 0;
+
     for (const meeting of meetings) {
       // Same idempotency check the webhook path uses — skip anything
       // already imported (via webhook or a previous backfill run).
@@ -62,6 +69,18 @@ export async function POST() {
           `Backfill: failed to fetch transcript for meeting ${meeting.recordingId}`,
           err
         );
+        skippedFetchFailed++;
+        continue;
+      }
+
+      // Before the row and before the Gemini call (rules.md §2) — a recording
+      // with no captured speech would otherwise import as a permanently
+      // empty transcript and spend a request proving it.
+      if (isEmptyTranscriptText(rawText)) {
+        console.warn(
+          `Backfill: skipping meeting ${meeting.recordingId} — transcript text is empty`
+        );
+        skippedEmpty++;
         continue;
       }
 
@@ -92,19 +111,28 @@ export async function POST() {
         throw err;
       }
 
+      // The transcript row itself imported fine, so a Gemini-side failure
+      // isn't worth failing the whole sync over — but it must be *recorded*,
+      // not just logged (rules.md §2). Without this the row is
+      // indistinguishable from one that genuinely held no action items, and
+      // the run reports it as a clean import.
       try {
         await runExtractionForTranscript(transcript.id, transcript.rawText);
+        imported++;
       } catch (err) {
         console.error(
           `Extraction failed for backfilled transcript ${transcript.id}`,
           err
         );
+        await prisma.transcript.update({
+          where: { id: transcript.id },
+          data: { extractionStatus: "failed" },
+        });
+        failed++;
       }
-
-      imported++;
     }
 
-    return NextResponse.json({ imported });
+    return NextResponse.json({ imported, failed, skippedEmpty, skippedFetchFailed });
   } catch (err) {
     if (err instanceof FathomRequestError) {
       console.error("Fathom backfill sync failed", err.status, err.fathomResponse);

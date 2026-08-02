@@ -27,6 +27,16 @@ export function defaultTranscriptTitle(date: Date): string {
   return `Meeting — ${formatted}`;
 }
 
+// Checked *before* creating a transcript row or spending a Gemini call
+// (rules.md §2, empty transcript text). Fathom can return an empty transcript
+// for a recording with no captured speech — importing it produces a row that
+// can only ever show zero action items, and extracting from an empty string
+// spends a request from a 20/day budget to learn nothing. Both import paths
+// skip instead, with a reason.
+export function isEmptyTranscriptText(rawText: string | null | undefined): boolean {
+  return !rawText || rawText.trim().length === 0;
+}
+
 // Strips VTT/SRT cue numbers and timestamp lines, keeping spoken text (with
 // speaker labels, if present) so Gemini extracts against clean transcript text.
 export function normalizeTranscript(

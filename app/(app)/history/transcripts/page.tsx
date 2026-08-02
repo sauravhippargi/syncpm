@@ -79,10 +79,19 @@ export default async function TranscriptHistoryPage() {
                     </span>
                   </div>
                   <div className="flex shrink-0 items-center gap-2 text-[12px] text-text-secondary">
-                    <span>
-                      {transcript.actionItems.length} action item
-                      {transcript.actionItems.length === 1 ? "" : "s"}
-                    </span>
+                    {/* "Extraction failed" and "0 action items" used to render
+                        identically, so a swallowed import error passed for a
+                        meeting that simply had no tasks (rules.md §2). */}
+                    {transcript.extractionStatus === "failed" ? (
+                      <span className="rounded-[6px] bg-danger-tint px-2 py-1 font-medium text-danger">
+                        Extraction failed
+                      </span>
+                    ) : (
+                      <span>
+                        {transcript.actionItems.length} action item
+                        {transcript.actionItems.length === 1 ? "" : "s"}
+                      </span>
+                    )}
                     {blockerCount > 0 && (
                       <span className="rounded-[6px] bg-warning-tint px-2 py-1 font-medium text-warning-text">
                         {blockerCount} blocker{blockerCount === 1 ? "" : "s"}

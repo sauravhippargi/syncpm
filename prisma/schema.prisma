@@ -55,13 +55,21 @@ model FathomConnection {
 }
 
 model Transcript {
-  id              String   @id @default(cuid())
-  userId          String   @map("user_id")
-  title           String?
-  uploadedAt      DateTime @default(now()) @map("uploaded_at")
-  rawText         String   @map("raw_text")
-  source          String   @default("manual") @map("source") // "manual" | "fathom"
-  fathomMeetingId Int?     @unique @map("fathom_meeting_id")
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  title            String?
+  uploadedAt       DateTime @default(now()) @map("uploaded_at")
+  rawText          String   @map("raw_text")
+  source           String   @default("manual") @map("source") // "manual" | "fathom"
+  fathomMeetingId  Int?     @unique @map("fathom_meeting_id")
+  // Whether this transcript's Gemini extraction completed or errored. Needed
+  // because a failed extraction and a transcript that genuinely held no action
+  // items both leave a row with zero action_items — indistinguishable after the
+  // fact, which is exactly how a swallowed Fathom-backfill failure once
+  // returned HTTP 200 and passed for a successful import (rules.md §2, async
+  // import paths). Defaults to "succeeded" so existing rows and the synchronous
+  // upload path (where the user sees the error directly) are unaffected.
+  extractionStatus String   @default("succeeded") @map("extraction_status") // "succeeded" | "failed"
 
   user        User         @relation(fields: [userId], references: [id])
   actionItems ActionItem[]

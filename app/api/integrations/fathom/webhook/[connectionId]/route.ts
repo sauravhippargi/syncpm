@@ -6,7 +6,7 @@ import {
   FathomRequestError,
   verifyWebhookSignature,
 } from "@/lib/fathom";
-import { normalizeTranscript } from "@/lib/transcript";
+import { isEmptyTranscriptText, normalizeTranscript } from "@/lib/transcript";
 import { runExtractionForTranscript } from "@/lib/extraction";
 
 // Same Vercel Hobby timeout consideration as /api/extract (architecture.md
@@ -109,6 +109,16 @@ export async function POST(
     );
   }
 
+  // Before the row and before the Gemini call (rules.md §2). A recording with
+  // no captured speech is a successful delivery of nothing — 200 so Fathom
+  // doesn't retry it, but no row and no extraction request spent on it.
+  if (isEmptyTranscriptText(rawText)) {
+    console.warn(
+      `Fathom webhook: skipping meeting ${meetingId} — transcript text is empty`
+    );
+    return NextResponse.json({ ok: true, skipped: "empty_transcript" });
+  }
+
   let transcript;
   try {
     transcript = await prisma.transcript.create({
@@ -140,8 +150,11 @@ export async function POST(
   // SyncPM's own extraction stays the source of truth, not Fathom's built-in
   // action items (PRD 6.1a) — feed it through the identical pipeline manual
   // uploads use. The transcript itself already imported successfully, so an
-  // extraction failure here is logged rather than surfaced as a webhook
-  // failure (retrying wouldn't fix a Gemini-side issue).
+  // extraction failure here still returns 200 rather than making Fathom retry
+  // a delivery that was fine (retrying wouldn't fix a Gemini-side issue) — but
+  // it's recorded on the row, not just logged (rules.md §2). Nobody is
+  // watching a webhook, so an unrecorded failure is one nobody ever learns
+  // about.
   try {
     await runExtractionForTranscript(transcript.id, transcript.rawText);
   } catch (err) {
@@ -149,6 +162,11 @@ export async function POST(
       `Extraction failed for Fathom-imported transcript ${transcript.id}`,
       err
     );
+    await prisma.transcript.update({
+      where: { id: transcript.id },
+      data: { extractionStatus: "failed" },
+    });
+    return NextResponse.json({ ok: true, extraction: "failed" });
   }
 
   return NextResponse.json({ ok: true });
