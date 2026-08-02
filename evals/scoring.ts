@@ -11,14 +11,30 @@ import type { ExtractedActionItem } from "../lib/prompts/extraction";
 export interface ExpectedItem {
   id: string;
   descriptionContains: string[]; // ALL must appear — this is how we identify the item (recall)
-  owner?: string; // exact-match expectation
+  // Owner assertions come in three shapes:
+  //   owner: "Name"          — exact-match the extracted owner
+  //   ownerExpected: false   — assert NO owner (a named one is a failure)
+  //   ownerExpected: true    — assert SOME owner, without checking which
+  // Absent entirely: owner isn't checked at all.
+  //
+  // **`ownerExpected: false` is the canonical spelling for "must be
+  // unassigned" — use it in new fixtures.** It matches the
+  // dueDateExpected/blockerExpected vocabulary and doesn't overload a field
+  // whose absence already means "don't check". `owner: null` is still accepted
+  // as a synonym, because it reads naturally and an unguarded `null` would
+  // otherwise reach norm() and throw mid-scoring — after the Gemini calls are
+  // already spent. Accepting it is a safety net, not an invitation: don't
+  // reintroduce it.
+  owner?: string | null;
+  // `null` is the legacy spelling of `false`, still used by optionalItems in
+  // casual-team-catchup-vague; both mean "must not be a named owner".
+  ownerExpected?: boolean | null;
   // Whether a non-empty ownerEvidence quote must accompany that owner (prd.md
-  // 6.2a). Only consulted when `owner` is set, and defaults to true there —
-  // an owner is never supposed to survive extraction without one, so fixtures
-  // opt in by simply naming an owner. Set false only to deliberately exempt a
-  // case; it is never a reason to loosen the `owner` expectation itself.
+  // 6.2a). Only consulted when an owner is actually expected to EXIST —
+  // demanding a citation for an item asserted to be unassigned would
+  // contradict the coupling rule, which nulls exactly those owners it can't
+  // cite. Defaults to true where it applies; set false to exempt a case.
   ownerEvidenceExpected?: boolean;
-  ownerExpected?: null; // optional-item constraint: must NOT be a named owner
   dueDateExpected?: boolean; // presence/absence, not exact value
   blockerExpected?: boolean; // presence/absence of a non-empty blocker note
   blockerNoteContains?: string[]; // ANY one is enough — tolerant of paraphrasing (see hasAnyKeyword)
@@ -68,6 +84,10 @@ export function hasDueDate(item: ExtractedActionItem): boolean {
 
 export function hasBlocker(item: ExtractedActionItem): boolean {
   return item.blockerNote != null && item.blockerNote.trim() !== "";
+}
+
+export function hasOwner(item: ExtractedActionItem): boolean {
+  return item.owner != null && item.owner.trim() !== "";
 }
 
 // Presence-only, like hasDueDate/hasBlocker — the quote's *wording* isn't
@@ -165,8 +185,31 @@ export function scoreExpected(
     failReasons.push(`not found (needed all of: ${item.descriptionContains.join(", ")})`);
   }
 
-  if (item.owner !== undefined) {
-    const ok = found && norm(match!.owner ?? "") === norm(item.owner);
+  // Mirrors dueDateExpected/blockerExpected: a boolean asserts presence or
+  // absence, a literal value asserts the value itself. Asserting *absence* is
+  // what makes a recall-under-soft-assignment fixture possible — an item that
+  // is genuinely unassigned must be extracted WITH a null owner, and inventing
+  // a name for it is as much a failure as dropping the item.
+  const expectsNoOwner = item.ownerExpected === false || item.ownerExpected === null || item.owner === null;
+  const expectsAnyOwner = item.ownerExpected === true;
+  const expectsNamedOwner = typeof item.owner === "string";
+
+  if (expectsNoOwner) {
+    const ok = found && !hasOwner(match!);
+    checks.push({ label: "owner", ok });
+    if (found && !ok) {
+      failReasons.push(
+        `owner: expected none (unassigned), got "${match!.owner}" — inventing an owner is a failure`
+      );
+    }
+  } else if (expectsAnyOwner) {
+    const ok = found && hasOwner(match!);
+    checks.push({ label: "owner", ok });
+    if (found && !ok) {
+      failReasons.push("owner: expected an owner to be identified, got none");
+    }
+  } else if (expectsNamedOwner) {
+    const ok = found && norm(match!.owner ?? "") === norm(item.owner as string);
     checks.push({ label: "owner", ok });
     if (found && !ok) {
       failReasons.push(`owner: expected "${item.owner}", got "${match!.owner ?? "(none)"}"`);
@@ -179,7 +222,12 @@ export function scoreExpected(
   // practice this fails alongside the owner check rather than alone; scoring
   // it separately is what makes the *reason* visible in the report ("the
   // model had no quote") instead of just "owner: got (none)".
-  if (item.owner !== undefined && (item.ownerEvidenceExpected ?? true)) {
+  //
+  // Only applies where an owner is expected to exist. On an item asserted to
+  // be unassigned there is no owner for a quote to support, and demanding one
+  // would contradict the coupling rule that produced the null in the first
+  // place.
+  if ((expectsNamedOwner || expectsAnyOwner) && (item.ownerEvidenceExpected ?? true)) {
     const ok = found && hasOwnerEvidence(match!);
     checks.push({ label: "ownerEvidence", ok });
     if (found && !ok) {
@@ -242,7 +290,13 @@ export function scoreOptional(
   if (ambiguous) return `${item.id}: ${ambiguityReason(item.descriptionContains, matches)}`;
   if (!match) return null;
 
-  if (item.ownerExpected === null && norm(match.owner ?? "") !== "") {
+  // Same three spellings scoreExpected accepts — `ownerExpected: null` (the
+  // legacy form casual-team-catchup-vague uses), `ownerExpected: false`, and
+  // `owner: null`. Without the last one, discussion-heavy-planning's optional
+  // CRM item would silently assert nothing about its owner.
+  const expectsNoOwner =
+    item.ownerExpected === null || item.ownerExpected === false || item.owner === null;
+  if (expectsNoOwner && hasOwner(match)) {
     return `${item.id}: extracted with a named owner "${match.owner}" but no one volunteered (should be unassigned or skipped)`;
   }
   if (item.dueDateExpected === false && hasDueDate(match)) {

@@ -1,0 +1,59 @@
+Dana Whitfield: Okay, I think we're all here. This one's less of a status thing and more me thinking out loud about the fall push, so jump in wherever.
+
+Dana Whitfield: So the thing that's been bugging me is that we still don't have a clear story for the mid-market segment. We keep saying we'll get to it and then the enterprise stuff eats the quarter.
+
+Dana Whitfield: And I don't think it's a resourcing problem exactly. I think it's that nobody's written down what mid-market even means for us. Like, is it seat count, is it revenue band, is it deal cycle length. Ask three people and you get three answers.
+
+Dana Whitfield: So that probably needs to get nailed down before we do anything else. Otherwise we're going to build collateral against a definition that half the team disagrees with.
+
+Priya Raghunathan: Yeah, sales has their own version of it in the CRM and it doesn't match what we use in the dashboards.
+
+Dana Whitfield: Right, which is its own mess. But let's not solve that today.
+
+Dana Whitfield: The other piece is the pricing page. We've talked about this for months. Right now it's basically two columns and a "contact us," and every single person who's looked at it has said the middle option is confusing.
+
+Dana Whitfield: I keep hearing from the AEs that prospects land there, can't tell which tier they are, and just bounce. That's not a design nitpick at that point, that's leakage.
+
+Priya Raghunathan: Do we have numbers on that or is it anecdotal?
+
+Dana Whitfield: Mostly anecdotal, which is part of the problem. We should probably actually pull the funnel data before we redesign anything, because otherwise we're guessing.
+
+Dana Whitfield: I'll take a look at what's in Amplitude and see if the drop-off is actually where we think it is.
+
+Priya Raghunathan: That'd be useful. I can also ask the AEs to write down specific examples instead of us relying on hallway conversations.
+
+Dana Whitfield: Perfect, yeah, do that.
+
+Dana Whitfield: Okay, third thing, and this one's more of a maybe. There's been noise about doing a webinar series in October. I'm lukewarm on it honestly.
+
+Dana Whitfield: Like, webinars are fine, but our last three had maybe forty people show up and two of them turned into anything. I'd rather we not do something just because it's on the calendar from last year.
+
+Priya Raghunathan: I don't feel strongly either way.
+
+Dana Whitfield: Let's leave it. If someone feels passionate they can make the case, but I'm not going to push it.
+
+Dana Whitfield: What I do think matters is the case study backlog. We have, what, six customers who've said yes to being referenced and we've published one?
+
+Priya Raghunathan: Something like that. The bottleneck is legal review, not the writing.
+
+Dana Whitfield: See, that's the kind of thing I want to actually fix. Because "we don't have case studies" sounds like a content problem and it's actually a process problem.
+
+Dana Whitfield: Somebody needs to sit down with legal and figure out what the actual turnaround expectation is, and whether we can get a lighter-weight approval path for the ones where the customer's already signed off.
+
+Priya Raghunathan: I think that's worth doing before we commit to any more.
+
+Dana Whitfield: Agreed. And separately, the one case study we did publish — nobody's linked to it from anywhere. It's just sitting on the blog.
+
+Dana Whitfield: That should get worked into the nurture sequence at minimum. Feels like the cheapest win on this whole list.
+
+Priya Raghunathan: I can look at where it'd fit.
+
+Dana Whitfield: Great.
+
+Dana Whitfield: Last thing and then I'll let everyone go. I've been going back and forth on whether we're even measuring the right things. Half our dashboards are impressions and I don't know what I'm supposed to do with an impression.
+
+Dana Whitfield: But that's a bigger conversation and I don't want to open it at four fifty-five on a Thursday.
+
+Priya Raghunathan: Appreciated.
+
+Dana Whitfield: Okay. Thanks everyone.

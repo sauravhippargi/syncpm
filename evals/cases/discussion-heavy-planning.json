@@ -1,0 +1,84 @@
+{
+  "transcriptFile": "discussion-heavy-planning.txt",
+  "notes": "RECALL-UNDER-SOFT-ASSIGNMENT case. Deliberately unlike the other four fixtures: one dominant speaker thinking aloud, and almost no vocative hand-offs ('Name, can you...'). Real tasks surface through deliberation ('that needs to get nailed down', 'somebody needs to sit down with legal') rather than explicit assignment, so most expected items legitimately have owner: null. Exists because the other four fixtures are all explicit-assignment meetings and casual-team-catchup-vague rewards restraint \u2014 meaning a prompt tuned to only recognize named hand-offs scores 100% on the suite while under-extracting badly on real discussion-heavy meetings. That exact regression occurred (prompt additions moved a real transcript from 2 items to 0 at temperature 0) and the suite could not detect it. Ground truth authored from the transcript directly; no metrics or dates inferred.",
+  "expectedItems": [
+    {
+      "id": "define-mid-market",
+      "descriptionContains": [
+        "mid-market",
+        "defin"
+      ],
+      "ownerExpected": false,
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "ownerEvidenceExpected": false,
+      "note": "Stated as 'that probably needs to get nailed down' \u2014 a real task with no one assigned. Owner MUST be null; inventing an owner here is a failure, but so is dropping the item."
+    },
+    {
+      "id": "pull-pricing-dropoff-data",
+      "descriptionContains": [
+        "amplitude"
+      ],
+      "owner": "Dana Whitfield",
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "note": "Self-assigned, not addressed by name: 'I'll take a look at what's in Amplitude.' Tests that first-person commitment is recognized as ownership without a vocative. Keyed on 'amplitude' because the model describes this via the tool and 'drop-off' rather than the word 'funnel' \u2014 an earlier ['funnel'] keyword produced a false not-found despite the item being extracted correctly in every trial."
+    },
+    {
+      "id": "collect-ae-examples",
+      "descriptionContains": [
+        "ae",
+        "example"
+      ],
+      "owner": "Priya Raghunathan",
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "note": "Self-offered ('I can also ask the AEs...') and accepted by Dana. Ownership comes from the offer, not from being asked."
+    },
+    {
+      "id": "legal-turnaround-for-case-studies",
+      "descriptionContains": [
+        "legal"
+      ],
+      "ownerExpected": false,
+      "dueDateExpected": false,
+      "ownerEvidenceExpected": false,
+      "note": "'Somebody needs to sit down with legal and figure out what the actual turnaround expectation is.' Explicitly unassigned \u2014 owner MUST be null. This is the case-study bottleneck, so it is a real task, not musing. Blocker status is deliberately NOT asserted (neither required nor forbidden), following the chase-legal-tos precedent in weekly-cross-functional-sync.json: this task is the unblocking action, not itself a blocked task, and Priya's 'the bottleneck is legal review' makes either reading defensible."
+    },
+    {
+      "id": "add-case-study-to-nurture",
+      "descriptionContains": [
+        "nurture"
+      ],
+      "owner": "Priya Raghunathan",
+      "dueDateExpected": false,
+      "blockerExpected": false,
+      "note": "Dana states the need ('should get worked into the nurture sequence'), Priya volunteers ('I can look at where it'd fit') and Dana accepts. Owner is the volunteer, not the person who raised it."
+    }
+  ],
+  "optionalItems": [
+    {
+      "id": "crm-dashboard-definition-mismatch",
+      "descriptionContains": [
+        "crm"
+      ],
+      "ownerExpected": false,
+      "dueDateExpected": false,
+      "note": "Priya raises that sales' CRM definition doesn't match the dashboards, and Dana explicitly defers it ('let's not solve that today'). Acceptable to extract or skip; if extracted, must NOT have an owner or a due date."
+    }
+  ],
+  "forbiddenItems": [
+    {
+      "descriptionContains": [
+        "webinar"
+      ],
+      "reason": "Actively decided against \u2014 'I'm lukewarm', 'let's leave it', 'I'm not going to push it'. A rejected idea is not a task."
+    },
+    {
+      "descriptionContains": [
+        "impression"
+      ],
+      "reason": "Dana muses about whether the dashboards measure the right things, then explicitly defers it ('bigger conversation and I don't want to open it'). Genuine vague discussion with no resulting task."
+    }
+  ]
+}
