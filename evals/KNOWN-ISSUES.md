@@ -17,7 +17,7 @@ what the fixture reported.
 **Fixture:** `evals/cases/engineering-sprint-sync.json` → `full-qa-pass`
 **Reported symptom:** owner scored as **"Kim Osei"** instead of **"Sam Torres"**.
 **Actual cause:** a substring identity-match collision in the harness
-(section 2). The model was attributing the task to Sam Torres correctly; the
+(section 3). The model was attributing the task to Sam Torres correctly; the
 fixture was reading a different extracted row and reporting *its* owner.
 
 `full-qa-pass` matched on `descriptionContains: ["qa"]`, and the wire-up item's
@@ -136,9 +136,16 @@ correction above isn't over-applied:
   prompt state that predates every change made during this investigation. The
   worked-example technique genuinely fixed it.
 - The owner-attribution *rule* in the prompt (addressee outranks other names in
-  the sentence) caused zero measured regressions and is defensible guidance on
-  its own terms. It is kept. What is now unsupported is the claim that it was
-  *tested and failed* — that test was reading the wrong row.
+  the sentence) caused zero measured regressions. It was **retained** here as
+  defensible guidance on its own terms — and has since been **removed and
+  measured** rather than assumed (see section 2). Removing it leaves
+  `full-qa-pass` owner at **5/5** on engineering-sprint-sync at n=5, along with
+  every other check on that fixture. That check was the rule's entire
+  justification, so this is direct confirmation of what this section concluded
+  by inference: there was no real attribution bug for the rule to prevent.
+  Removing it also improved soft-assignment recall elsewhere. What remains
+  unsupported is the earlier claim that the rule was *tested and failed* — that
+  test was reading the wrong row.
 
 ---
 
@@ -156,7 +163,73 @@ precision-neutral gets a confirmation run first rather than being assumed.
 
 ---
 
-## 2. Substring identity-match collisions in the harness — FIXED (detection), FIXTURES PARTLY UNVERIFIED
+## 2. Soft-assignment recall — PARTIALLY FIXED, ONE TARGET STILL BROKEN
+
+**Scope:** the prompt (`lib/prompts/extraction.ts`), not the harness.
+
+**The regression.** A real Fathom-imported transcript — "PMM Team Weekly Call", a
+73-line single-speaker monologue — extracted **2** action items under the
+pre-`415977d` prompt and **0** under the current one. Same model, same
+`temperature: 0`, same day, prompt file the only variable. Both items the older
+prompt found were genuine tasks, and both had `owner: null`. My first diagnosis
+of that transcript — "correct behavior on a task-free monologue" — was wrong; it
+was wrong under the current prompt only.
+
+**Why the suite couldn't see it.** All four original fixtures are
+explicit-assignment meetings, and `casual-team-catchup-vague` actively rewards
+restraint. A prompt tuned to recognize only named hand-offs therefore scores
+100% on the suite while under-extracting badly on discussion-heavy input.
+`discussion-heavy-planning` exists to detect exactly this: one dominant speaker,
+almost no vocative hand-offs, three expected items legitimately unassigned.
+
+### Variant table — `discussion-heavy-planning`, found · fully-correct
+
+| configuration | define-mid-market | legal-turnaround | other three |
+|---|---|---|---|
+| baseline, current prompt (n=3) | 1/3 · 1/3 | 1/3 · 0/3 | 3/3 · 3/3 |
+| whole rule block removed (n=3) | 2/3 · 0/3 | 2/3 · 2/3 | 3/3 · 3/3 |
+| owner reasoning removed + blocker guard reworded (n=5) | 0/5 · 0/5 | 4/5 · 4/5 | 5/5 · 5/5 |
+| **owner reasoning removed, blocker bullet verbatim (n=5) — SHIPPED** | **0/5 · 0/5** | **5/5 · 5/5** | **5/5 · 5/5** |
+
+The third row was not a clean single variable (a subtraction plus a reworded
+blocker guard); the fourth is, and reproduces the same `define-mid-market` 0/5,
+which retracts the theory that the reword was what suppressed it.
+
+### The finding: agentive vs. agentless phrasing
+
+Recall was **recoverable** for *"somebody needs to sit down with legal"* — an
+unassigned task that still names an indefinite agent. It was **not recoverable**
+for *"that probably needs to get nailed down"* — agentless passive, no actor
+named or implied. Removing the owner reasoning took the first from 1/3 to 5/5 and
+left the second at 0/5 across two independent n=5 runs. Whatever suppresses the
+agentless form lives elsewhere in the prompt.
+
+Also measured: output became **fully deterministic** once the rule was removed —
+identical extractions across all 5 trials, where the baseline varied 3/3/5.
+
+### Untested suspects — do NOT re-test the owner rule
+
+Two additions remain unmeasured, and one of them is the likely cause of the
+agentless failure:
+
+1. **The three worked few-shot examples** — every one demonstrates explicit
+   vocative assignment ("Name, can you take this on?").
+2. **The `ownerEvidence` requirement** — demands a verbatim quote that names or
+   directly addresses a person, which an agentless task cannot supply.
+
+The owner-attribution rule has now been tested across four configurations and is
+removed. **Do not spend quota re-testing it.**
+
+### Validation gate for any further prompt change
+
+Re-run `engineering-sprint-sync` at n=5 and confirm `escalate-twilio`
+blocker/blockerNote and `full-qa-pass` owner both hold at 5/5. Those are the two
+checks with real, independently-verified history (section 1c); everything else on
+that fixture has held at 5/5 alongside them.
+
+---
+
+## 3. Substring identity-match collisions in the harness — FIXED (detection), FIXTURES PARTLY UNVERIFIED
 
 **Scope:** `evals/scoring.ts` matching, not the model.
 
@@ -244,7 +317,7 @@ either if it ever collides, which is the safe state to leave them in.
 
 ---
 
-## 3. `owner_evidence` lost on an owner revert — WON'T FIX (now data-only)
+## 4. `owner_evidence` lost on an owner revert — WON'T FIX (now data-only)
 
 **Scope:** stored data only (`app/api/action-items/[id]/route.ts`). Not an
 extraction problem, so the eval suite does not cover it — recorded here because
@@ -268,8 +341,7 @@ difference.
 
 **Still a deliberate decision not to fix.** Closing it means keeping the cleared
 quote server-side to re-attach on an exact revert — real machinery to preserve a
-value nothing currently reads (see the note in section 2 of this file's
-companion analysis: `owner_evidence` has no read path in the app today). The
+value nothing currently reads (see section 3: `owner_evidence` has no read path in the app today). The
 invariant that matters still holds: no row ever carries a quote under an owner
 that quote doesn't name. Losing a quote is the safe direction to fail.
 
@@ -281,7 +353,7 @@ owner-without-quote row does not imply extraction failed to cite one.
 
 ---
 
-## 4. Eval quota is shared with production — MITIGATED, NOT SOLVED
+## 5. Eval quota is shared with production — MITIGATED, NOT SOLVED
 
 `evals/run.ts` currently runs on the same `GEMINI_API_KEY` as production, so
 eval trials and real user traffic draw from one free-tier budget of **20
