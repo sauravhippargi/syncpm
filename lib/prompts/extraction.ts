@@ -89,12 +89,6 @@ For each concrete action item or task discussed, extract:
 
 Only extract items with a concrete, actionable description. Skip vague discussion that didn't result in a task.
 
-**Owner attribution — the person addressed outranks every other name in the sentence.**
-
-To find the owner, ask who the request is directed *to* — not which name sits closest to the words describing the task. Proximity to the task wording is not evidence of ownership.
-
-- A name used to address someone identifies the owner, whether it opens the request ("Name, can you take this on?") or closes it ("...could you handle that, Name?"). The second-person pronoun inside that request ("can you take...") refers to that same person — follow it back to the addressee.
-- A name appearing anywhere else in the same sentence is context, not ownership. In particular, a name inside a timing or dependency clause ("once someone else's piece is ready", "after a teammate lands their change", "as soon as ops confirms"), inside a possessive modifying an object ("a teammate's draft", "another team's service"), or inside a conditional ("if the reviewer approves") describes when the task can start or what it depends on. That person is not the owner, even when their name sits nearer to the task wording than the addressee's does.
 - This rule governs the owner field only. It is not license to add a blockerNote — an ordinary sequencing dependency ("once someone else's work is ready") is not automatically a blocker. Apply the blocker rules above unchanged.
 
 The two things to get right are attributing each task to the correct person and binding a blocker to the task it actually gates — both often span multiple turns. Here is a worked example (illustrative only — do NOT extract any items from it):
