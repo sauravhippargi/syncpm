@@ -99,6 +99,24 @@ byte-identical.
 specific rows cannot be re-examined. What is established is that the reported
 failure never required a real attribution error to occur.
 
+**Second scope limit — this experiment did NOT clear `ownerEvidence` generally.**
+It answered one question: was `ownerEvidence` the reason `full-qa-pass` owner
+started passing? No — the collision fix was. That conclusion stands.
+
+But the setup cannot speak to anything beyond it, for two reasons. It reverted
+the *entire* pre-`ownerEvidence` prompt (schema property, field bullet, and three
+worked-example lines together), so it never isolated `ownerEvidence` from
+anything. And it measured only `engineering-sprint-sync`, where **every expected
+item has an explicit named owner** — a fixture that structurally cannot detect a
+failure specific to items with no agent at all. `discussion-heavy-planning`, the
+fixture built to ask that question, did not exist yet.
+
+**Do not read this section as having already tested the leading suspect in
+section 2.** `ownerEvidence` as a cause of *agentless recall suppression* is a
+different hypothesis, untested, and currently the most likely explanation for the
+regression documented there. Ruling it out for the phantom attribution bug is not
+ruling it out for this.
+
 ---
 
 ## 1b. Knock-on: the `full-qa-pass` blocker check was also never measured
@@ -195,14 +213,62 @@ The third row was not a clean single variable (a subtraction plus a reworded
 blocker guard); the fourth is, and reproduces the same `define-mid-market` 0/5,
 which retracts the theory that the reword was what suppressed it.
 
+### Re-measured on the real transcript after v3 shipped — still 0
+
+The PMM transcript was re-run against the committed v3 prompt (`a8fbfde`), same
+bytes as the original measurement, n=1: **still 0 items.** So removing the
+owner-attribution reasoning does **not** fix the regression this section is about.
+v3's gain was real but narrower than the regression it was chasing.
+
+| prompt state | PMM items |
+|---|---|
+| pre-`415977d` | 2 (both `owner: null`) |
+| current, pre-v3 | 0 |
+| committed v3 (`a8fbfde`) | **0** |
+
+Both pre-regression items were **agentless**, which is what makes this coherent
+rather than contradictory:
+
+- *"we need to get commitment from the campaign managers"* — no actor named
+- *"I think we should take the 14.0 items and add more"* — first-person plural, no
+  individual attaching themselves
+
+Neither has anyone saying "I'll do it" or being addressed by name. Both are the
+same shape as `define-mid-market`, which is 0/5 under v3. So **the real transcript
+and the fixture now agree on the same boundary**, from independent inputs.
+
+*n=1 limit:* justified by v3's zero output variance across five trials on both
+fixtures, but a single trial cannot distinguish a stable 0 from a rare 0. A second
+trial is worth one call only if a future variant *also* returns 0 — if a variant
+returns non-zero, the asymmetry doesn't matter.
+
 ### The finding: agentive vs. agentless phrasing
 
 Recall was **recoverable** for *"somebody needs to sit down with legal"* — an
 unassigned task that still names an indefinite agent. It was **not recoverable**
 for *"that probably needs to get nailed down"* — agentless passive, no actor
 named or implied. Removing the owner reasoning took the first from 1/3 to 5/5 and
-left the second at 0/5 across two independent n=5 runs. Whatever suppresses the
-agentless form lives elsewhere in the prompt.
+left the second at 0/5 across two independent n=5 runs, and leaves the real PMM
+transcript at 0. Whatever suppresses the agentless form lives elsewhere in the
+prompt.
+
+### Coverage risk — `define-mid-market` is the only committable agentless case
+
+`define-mid-market` is currently the **entire** suite's coverage of this failure
+mode. The transcript that actually demonstrates the regression cannot be committed
+— it's third-party YouTube content — so the fixture item is the only version of
+this test that lives in the repo.
+
+That makes it load-bearing out of proportion to its size. If it were ever removed,
+or loosened to pass, **the suite would lose all coverage of agentless recall and
+this regression would become undetectable again** — the exact situation that let
+it ship in the first place.
+
+It is also the most-failing expectation in the suite (0/5 in two configurations),
+which is precisely the kind of item that attracts pressure to soften. **The
+correct response to doubts about it is to author a second, stronger agentless
+item — not to delete or loosen this one.** Same standing rule as everywhere else
+in this file: do not fix a failing check by weakening a fixture that is correct.
 
 Also measured: output became **fully deterministic** once the rule was removed —
 identical extractions across all 5 trials, where the baseline varied 3/3/5.
