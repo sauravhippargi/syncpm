@@ -62,7 +62,7 @@ collisions.
 
 ---
 
-## 1a. Disentangling experiment — ruling out the `ownerEvidence` prompt
+## 1a. Disentangling experiment — `ownerEvidence` ruled out for the attribution bug ONLY
 
 Two things changed between the historical failures and the first green run: the
 collision was removed **and** the prompt gained the `ownerEvidence` field plus

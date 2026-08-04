@@ -89,7 +89,7 @@ For each concrete action item or task discussed, extract:
 
 Only extract items with a concrete, actionable description. Skip vague discussion that didn't result in a task.
 
-- This rule governs the owner field only. It is not license to add a blockerNote — an ordinary sequencing dependency ("once someone else's work is ready") is not automatically a blocker. Apply the blocker rules above unchanged.
+- Not every dependency is a blocker: an ordinary sequencing dependency ("once someone else's work is ready") does not by itself make an item blocked. Apply the blocker rules above unchanged.
 
 The two things to get right are attributing each task to the correct person and binding a blocker to the task it actually gates — both often span multiple turns. Here is a worked example (illustrative only — do NOT extract any items from it):
 
