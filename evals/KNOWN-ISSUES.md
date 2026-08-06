@@ -111,11 +111,13 @@ item has an explicit named owner** — a fixture that structurally cannot detect
 failure specific to items with no agent at all. `discussion-heavy-planning`, the
 fixture built to ask that question, did not exist yet.
 
-**Do not read this section as having already tested the leading suspect in
-section 2.** `ownerEvidence` as a cause of *agentless recall suppression* is a
-different hypothesis, untested, and currently the most likely explanation for the
-regression documented there. Ruling it out for the phantom attribution bug is not
-ruling it out for this.
+**Do not read this section as having tested `ownerEvidence` against section 2's
+regression.** That was a separate hypothesis and it was tested separately, on
+`discussion-heavy-planning` once that fixture existed: removing `ownerEvidence`
+left `define-mid-market` at 0/5 and moved the PMM transcript only 0 → 1. So it
+was **not** the cause of agentless recall suppression either — but that is a
+finding from section 2's work, not from this experiment. Ruling something out for
+the phantom attribution bug never ruled it out for anything else.
 
 ---
 
@@ -181,9 +183,17 @@ precision-neutral gets a confirmation run first rather than being assumed.
 
 ---
 
-## 2. Soft-assignment recall — PARTIALLY FIXED, ONE TARGET STILL BROKEN
+## 2. Soft-assignment recall — RESOLVED, with a known ~30% residual miss rate
 
 **Scope:** the prompt (`lib/prompts/extraction.ts`), not the harness.
+
+**Status: fixed, and work on it is deliberately stopped — not pending.** Two
+changes shipped together: a fourth few-shot example demonstrating an agentless
+task extracted with `owner: null`, and a blocker rule stating that a consequence
+of not doing something is not a blocker. Together they restored recall from a
+hard 0/5 to roughly 70% and eliminated the blocker fabrication. The remaining
+~30% miss rate is a **known, accepted limitation**, recorded at the end of this
+section. Do not reopen it without a reason beyond "the number could be higher."
 
 **The regression.** A real Fathom-imported transcript — "PMM Team Weekly Call", a
 73-line single-speaker monologue — extracted **2** action items under the
@@ -273,18 +283,48 @@ in this file: do not fix a failing check by weakening a fixture that is correct.
 Also measured: output became **fully deterministic** once the rule was removed —
 identical extractions across all 5 trials, where the baseline varied 3/3/5.
 
-### Untested suspects — do NOT re-test the owner rule
+### What actually fixed it
 
-Two additions remain unmeasured, and one of them is the likely cause of the
-agentless failure:
+Every suspect was tested in isolation. Three of the four did nothing for
+`define-mid-market`, which sat at a hard 0/5 through all of them:
 
-1. **The three worked few-shot examples** — every one demonstrates explicit
-   vocative assignment ("Name, can you take this on?").
-2. **The `ownerEvidence` requirement** — demands a verbatim quote that names or
-   directly addresses a person, which an agentless task cannot supply.
+| intervention | define-mid-market | outcome |
+|---|---|---|
+| owner-attribution reasoning removed | 0/5 | helped `legal-turnaround` (1/3 → 5/5), shipped in `a8fbfde` |
+| `ownerEvidence` removed | 0/5 | moved PMM 0 → 1 only; not shipped |
+| skip-vague line removed | 0/5 | *reduced* `legal-turnaround` to 3/5; not shipped |
+| **example 4 added** | **~70%** | shipped |
+| **+ consequence-of-inaction rule** | ~70%, blockers clean | shipped |
 
-The owner-attribution rule has now been tested across four configurations and is
-removed. **Do not spend quota re-testing it.**
+Example 4 is what recovered recall. The consequence rule is what fixed the
+blocker fabrication example 4 introduced — `full-qa-pass` blocker 3/5 → 5/5, and
+`define-mid-market`'s `blockerNote` null in every trial where it was extracted.
+Notably example 4 *already taught* that lesson inside its worked extraction and
+that was not enough; stating it as a rule where the model decides `blockerNote`
+is what made it hold. Worth remembering the next time a lesson is buried in an
+example.
+
+### Known limitation — ~30% agentless miss rate, NOT under investigation
+
+`define-mid-market` recall pooled across four n=5 runs of example 4 is
+**14/20 (70%)**. Individual runs came back 5/5, 2/5, 5/5, 2/5 — that bimodal
+spread is what a ~70% rate looks like at n=5, not evidence that any run's
+configuration was better. The single 5/5 was the high tail and should not be
+quoted as the feature's reliability.
+
+**Narrowing this is not worth attempting.** Distinguishing 70% from 85% needs
+n≈30, and the free-tier quota is 20 requests/day shared with production
+(section 5) — a single such measurement would take two days of the entire
+budget and would still only size the problem, not fix it. Accepted as-is: a
+~30% miss on genuinely agentless tasks, against 0% before.
+
+The product-level argument for accepting it: a missing action item is invisible
+and uncorrectable, but this is now a *partial* miss rate on the hardest
+phrasing, not a total blind spot. The prior state extracted none of them.
+
+**Do NOT re-test the owner-attribution rule, the `ownerEvidence` requirement, or
+the skip-vague line.** All three were measured across multiple configurations
+and none of them is the lever. That is settled.
 
 ### Validation gate for any further prompt change
 
