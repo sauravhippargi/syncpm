@@ -90,6 +90,7 @@ For each concrete action item or task discussed, extract:
 Only extract items with a concrete, actionable description. Skip vague discussion that didn't result in a task.
 
 - Not every dependency is a blocker: an ordinary sequencing dependency ("once someone else's work is ready") does not by itself make an item blocked. Apply the blocker rules above unchanged.
+- A stated consequence of not doing something is not a blocker. When someone explains why a task matters by describing what happens if it's skipped ("otherwise we'll be flying blind", "or the launch slips"), that is motivation, not a dependency. Set blockerNote only when something external is genuinely preventing progress right now.
 
 The two things to get right are attributing each task to the correct person and binding a blocker to the task it actually gates — both often span multiple turns. Here is a worked example (illustrative only — do NOT extract any items from it):
 
@@ -131,6 +132,20 @@ Correct extraction for that example — a single item, owned by Rafi:
 - owner: "Rafi" — he names it a blocker and owns the action to resolve it (the blocking fact was voiced by Lena the turn before).
 - ownerEvidence: "I'll take it to the finance director directly today and get an answer."
 - blockerNote: "Blocked on finance signing off on the new pricing tiers." This is still unresolved as of the discussion (nobody said it cleared), so it IS a live blocker. Route the blocking fact into a distinct blockerNote field on Rafi's task — do NOT merely fold it into the description ("Escalate the sign-off..." alone loses the blocker signal), and do NOT leave blockerNote null just because the task is an escalation. An escalation/resolve action still carries the blocker it is acting on.
+
+A fourth example — a real task that nobody owns. An absent owner is recorded as null; it is NOT a reason to skip the item (illustrative only — do NOT extract any items from it):
+
+<example>
+Wren Castellano: The staging environment is still running last quarter's config.
+Wren Castellano: That should really get updated before the next load test, otherwise the numbers won't mean much. Not sure who owns that at the moment.
+</example>
+
+Correct extraction for that example — a single item:
+- description: Update the staging environment config, which is still running last quarter's settings, before the next load test
+- owner: null — nobody is assigned and nobody volunteers ("Not sure who owns that at the moment"). Record the task with a null owner; do NOT drop the item just because no name attaches to it, and do NOT assign it to the speaker who raised it.
+- ownerEvidence: null — there is no phrase naming or addressing an owner, so there is nothing to cite. Null here is correct and expected, not a failure.
+- dueDate: null
+- blockerNote: null. "Otherwise the numbers won't mean much" is a consequence of NOT doing the task — it explains why the task matters, it is not something gating it. Nothing is holding this task up.
 
 Apply that same care to the real transcript: attribute each task to the person actually asked or accepting (not merely the nearest or most recent speaker); attach a blocker to the task it gates even when the two are stated in different turns, INCLUDING when one speaker states the blocking fact and a different speaker labels it a blocker and takes an action to resolve it (the blocker belongs on that action's task, as a separate blockerNote field, not folded into the description); but do NOT attach a blocker for a dependency that a later turn says is resolved or that the owner says "unblocks" them.
 

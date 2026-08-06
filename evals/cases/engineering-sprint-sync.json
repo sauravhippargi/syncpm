@@ -26,7 +26,7 @@
     },
     {
       "id": "wire-up-ui",
-      "descriptionContains": ["ui", "wire"],
+      "descriptionContains": ["wire", "qa"],
       "owner": "Kim Osei",
       "dueDateExpected": true,
       "blockerExpected": false
